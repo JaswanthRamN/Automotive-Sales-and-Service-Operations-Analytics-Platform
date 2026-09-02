@@ -52,9 +52,18 @@ Day 1 establishes the repository structure and development tooling only. ETL pip
 
 Alternatively, on systems with `make`, use `make install` and `make test`.
 
+## Synthetic raw data
+
+Generate the reproducible development datasets with the default seed (`42`):
+
+```bash
+python scripts/generate_data.py
+```
+
+Use `--seed <number>` to create a different deterministic dataset. Generated CSV files are written to `data/raw/` and are intentionally ignored by Git.
+
 ## Development guardrails
 
 - Never commit `.env`, credentials, raw operational data, generated output, or local Power BI files.
 - Keep business logic inside the `automotive_analytics` package and cover it with tests.
 - Implement each project day only after inspecting and testing the existing repository.
-
