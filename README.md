@@ -62,6 +62,16 @@ python scripts/generate_data.py
 
 Use `--seed <number>` to create a different deterministic dataset. Generated CSV files are written to `data/raw/` and are intentionally ignored by Git.
 
+## Raw data profiling
+
+Profile and validate every CSV in `data/raw/`:
+
+```bash
+python scripts/profile_data.py
+```
+
+The command checks dataset and column statistics, nulls, duplicate rows and keys, unique values, numeric and date ranges, invalid domain and calculated values, date ordering, and foreign-key integrity. It writes CSV, JSON, and Markdown reports to `data/processed/profiling/`. A failing validation returns a nonzero exit code.
+
 ## Development guardrails
 
 - Never commit `.env`, credentials, raw operational data, generated output, or local Power BI files.
