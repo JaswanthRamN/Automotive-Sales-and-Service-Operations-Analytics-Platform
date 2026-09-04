@@ -72,6 +72,16 @@ python scripts/profile_data.py
 
 The command checks dataset and column statistics, nulls, duplicate rows and keys, unique values, numeric and date ranges, invalid domain and calculated values, date ordering, and foreign-key integrity. It writes CSV, JSON, and Markdown reports to `data/processed/profiling/`. A failing validation returns a nonzero exit code.
 
+## Data cleaning
+
+Clean all raw CSV datasets with deterministic Pandas pipelines:
+
+```bash
+python scripts/clean_data.py
+```
+
+The pipeline standardizes strings and categories, coerces data types, removes duplicates and unusable values, recalculates derived fields, enforces date rules, repairs service-order attributes from appointments, and removes broken relationships. Clean CSVs and `cleaning_summary.csv` are written to `data/processed/`; execution details are written to `logs/data_cleaning.log`. Raw files are never modified.
+
 ## Development guardrails
 
 - Never commit `.env`, credentials, raw operational data, generated output, or local Power BI files.
