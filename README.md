@@ -82,6 +82,20 @@ python scripts/clean_data.py
 
 The pipeline standardizes strings and categories, coerces data types, removes duplicates and unusable values, recalculates derived fields, enforces date rules, repairs service-order attributes from appointments, and removes broken relationships. Clean CSVs and `cleaning_summary.csv` are written to `data/processed/`; execution details are written to `logs/data_cleaning.log`. Raw files are never modified.
 
+## PostgreSQL schema DDL
+
+The ordered scripts in `sql/` define the `staging` and `analytics` schemas, eight text-based landing tables, six conformed dimensions, and the `fact_sales`, `fact_inventory`, and `fact_service` star-schema facts. Run them in numeric filename order when a PostgreSQL environment is available:
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/001_create_schemas.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/002_create_staging_tables.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/003_create_dimensions.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/004_create_facts.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/005_create_indexes.sql
+```
+
+The schema includes surrogate and natural-key constraints, foreign keys, measure and domain checks, slowly changing dimension fields, generated service metrics, and indexes for common dashboard filters. These scripts define structures only; they do not load data.
+
 ## Development guardrails
 
 - Never commit `.env`, credentials, raw operational data, generated output, or local Power BI files.
