@@ -96,6 +96,22 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/005_create_indexes.sql
 
 The schema includes surrogate and natural-key constraints, foreign keys, measure and domain checks, slowly changing dimension fields, generated service metrics, and indexes for common dashboard filters. These scripts define structures only; they do not load data.
 
+## PostgreSQL ETL
+
+Copy `.env.example` to `.env`, replace the PostgreSQL placeholder credentials, create the configured empty database, and run:
+
+```bash
+python scripts/run_etl.py
+```
+
+The ETL validates all eight processed CSV contracts with Pandas, creates missing schemas and tables, uses psycopg `COPY` to replace staging data, and rebuilds the dimensional warehouse within transactions. Row counts are verified before commit; failures roll back the active transaction and are logged to `logs/etl.log`. Full-refresh staging and warehouse steps make repeated runs deterministic.
+
+Run source preflight without connecting to PostgreSQL:
+
+```bash
+python scripts/run_etl.py --validate-only
+```
+
 ## Development guardrails
 
 - Never commit `.env`, credentials, raw operational data, generated output, or local Power BI files.
