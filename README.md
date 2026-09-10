@@ -112,6 +112,16 @@ Run source preflight without connecting to PostgreSQL:
 python scripts/run_etl.py --validate-only
 ```
 
+## Warehouse data quality
+
+After a successful ETL run, execute the read-only analytics checks:
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/analytics/data_quality.sql
+```
+
+The query returns one row per duplicate, duplicate-fact, missing-key, orphan, date, price, or negative-revenue check. Each row includes a `PASS`/`FAIL` status, failed-row count, and remediation detail; the warehouse passes only when every result is `PASS`.
+
 ## Development guardrails
 
 - Never commit `.env`, credentials, raw operational data, generated output, or local Power BI files.
