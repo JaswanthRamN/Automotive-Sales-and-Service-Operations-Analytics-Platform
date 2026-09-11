@@ -122,6 +122,24 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/analytics/data_quality.sql
 
 The query returns one row per duplicate, duplicate-fact, missing-key, orphan, date, price, or negative-revenue check. Each row includes a `PASS`/`FAIL` status, failed-row count, and remediation detail; the warehouse passes only when every result is `PASS`.
 
+## Sales analytics SQL
+
+Create the sales analytics views after the warehouse is loaded:
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/analytics/sales_analytics.sql
+```
+
+The views expose units sold, revenue, gross profit, gross margin, average selling price, monthly performance, brand/model, salesperson, dealership, vehicle type, and payment-method analysis. Every aggregate reads from a canonical one-row-per-sale view, signs returns with `unit_quantity`, and excludes cancelled sales.
+
+Validate all totals and duplicate-count safeguards:
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/analytics/sales_analytics_validation.sql
+```
+
+Every validation result must return `PASS` before the views are published to downstream reporting.
+
 ## Development guardrails
 
 - Never commit `.env`, credentials, raw operational data, generated output, or local Power BI files.
