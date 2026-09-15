@@ -140,6 +140,24 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/analytics/sales_analytics_validat
 
 Every validation result must return `PASS` before the views are published to downstream reporting.
 
+## Inventory analytics SQL
+
+Create the snapshot-aware inventory analytics views after the warehouse is loaded:
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/analytics/inventory_analytics.sql
+```
+
+The views expose inventory units and value, days in inventory, weighted average age, aging buckets, brand/model inventory, dealership inventory, and vehicle-level slow-moving stock. Buckets are `0-30`, `31-60`, `61-90`, `91-120`, and `120+`; to avoid overlap, day 120 belongs to `91-120` and `120+` means more than 120 days. Slow-moving inventory is strictly more than 90 days. Every aggregate retains its snapshot date.
+
+Validate snapshot-level totals and grain safeguards:
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/analytics/inventory_analytics_validation.sql
+```
+
+Every validation result must return `PASS` before inventory views are published.
+
 ## Development guardrails
 
 - Never commit `.env`, credentials, raw operational data, generated output, or local Power BI files.
