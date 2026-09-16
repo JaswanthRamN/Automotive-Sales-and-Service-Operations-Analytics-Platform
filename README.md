@@ -158,6 +158,26 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/analytics/inventory_analytics_val
 
 Every validation result must return `PASS` before inventory views are published.
 
+## Service analytics SQL
+
+Create the appointment and service analytics views after the ETL has loaded staging and warehouse tables:
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/analytics/service_analytics.sql
+```
+
+The views expose appointments, completions, cancellations, no-shows, completion rate, service revenue, average repair order, monthly revenue, and performance by service type, technician, and dealership. The canonical view has one row per appointment and joins the unique repair order by `appointment_id`, preventing duplicated service revenue. Completion rate uses completed, cancelled, and no-show appointments as its denominator; scheduled appointments are excluded.
+
+The source model does not currently contain authoritative service cost. Consequently, `service_cost` and `service_profit` are deliberately `NULL`, and `service_cost_available` is false rather than using invented margin assumptions.
+
+Validate appointment counts and revenue reconciliation:
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/analytics/service_analytics_validation.sql
+```
+
+Every validation result must return `PASS` before service views are published.
+
 ## Development guardrails
 
 - Never commit `.env`, credentials, raw operational data, generated output, or local Power BI files.
