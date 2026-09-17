@@ -178,6 +178,26 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/analytics/service_analytics_valid
 
 Every validation result must return `PASS` before service views are published.
 
+## Customer analytics SQL
+
+Create customer analytics after the warehouse facts are loaded:
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/analytics/customer_analytics.sql
+```
+
+The customer views aggregate sales and service independently before joining them to one current customer row, preventing cross-product revenue duplication. They expose total, new, repeat, inactive, sales-only, service-only, and sales-plus-service customers; repeat rate; customer revenue; service frequency; and customer lifetime value. New customers have exactly one lifetime qualifying interaction, repeat customers have two or more, and inactive customers have prior activity but none within 365 days of the latest warehouse activity.
+
+Because authoritative service cost is unavailable, customer lifetime value is explicitly labeled as interim revenue-based CLV (`sales revenue + service revenue`) rather than mixing sales profit with service revenue.
+
+Validate customer counts, revenue, segments, and frequency totals:
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/analytics/customer_analytics_validation.sql
+```
+
+Every validation result must return `PASS` before customer views are published.
+
 ## Development guardrails
 
 - Never commit `.env`, credentials, raw operational data, generated output, or local Power BI files.
