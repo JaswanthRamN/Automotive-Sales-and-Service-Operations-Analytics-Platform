@@ -126,7 +126,7 @@ FROM analytics.vw_sales_detail
 GROUP BY salesperson_key, salesperson_id, salesperson_name,
          dealership_key, dealership_id, dealership_name;
 
-CREATE OR REPLACE VIEW analytics.vw_dealership_performance AS
+CREATE OR REPLACE VIEW analytics.vw_sales_dealership_performance AS
 SELECT
     dealership_key,
     dealership_id,

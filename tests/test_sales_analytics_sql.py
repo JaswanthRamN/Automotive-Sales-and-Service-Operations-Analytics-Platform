@@ -25,7 +25,7 @@ def test_expected_sales_views_are_defined_once() -> None:
         "vw_monthly_sales",
         "vw_brand_model_performance",
         "vw_salesperson_performance",
-        "vw_dealership_performance",
+        "vw_sales_dealership_performance",
         "vw_vehicle_type_performance",
         "vw_payment_method_performance",
     }
@@ -65,7 +65,7 @@ def test_every_aggregate_exposes_required_kpis_and_grain_guard() -> None:
         "vw_monthly_sales",
         "vw_brand_model_performance",
         "vw_salesperson_performance",
-        "vw_dealership_performance",
+        "vw_sales_dealership_performance",
         "vw_vehicle_type_performance",
         "vw_payment_method_performance",
     ]
@@ -114,7 +114,7 @@ def test_validation_reconciles_fact_detail_kpis_and_all_grouped_views() -> None:
         "vw_monthly_sales",
         "vw_brand_model_performance",
         "vw_salesperson_performance",
-        "vw_dealership_performance",
+        "vw_sales_dealership_performance",
         "vw_vehicle_type_performance",
         "vw_payment_method_performance",
     ):

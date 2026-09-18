@@ -42,9 +42,9 @@ WITH fact_totals AS (
            COALESCE(SUM(units_sold), 0), COALESCE(SUM(revenue), 0), COALESCE(SUM(gross_profit), 0)
     FROM analytics.vw_salesperson_performance
     UNION ALL
-    SELECT 'vw_dealership_performance', COALESCE(SUM(fact_row_count), 0),
+    SELECT 'vw_sales_dealership_performance', COALESCE(SUM(fact_row_count), 0),
            COALESCE(SUM(units_sold), 0), COALESCE(SUM(revenue), 0), COALESCE(SUM(gross_profit), 0)
-    FROM analytics.vw_dealership_performance
+    FROM analytics.vw_sales_dealership_performance
     UNION ALL
     SELECT 'vw_vehicle_type_performance', COALESCE(SUM(fact_row_count), 0),
            COALESCE(SUM(units_sold), 0), COALESCE(SUM(revenue), 0), COALESCE(SUM(gross_profit), 0)

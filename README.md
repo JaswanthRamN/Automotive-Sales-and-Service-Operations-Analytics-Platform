@@ -198,6 +198,17 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/analytics/customer_analytics_vali
 
 Every validation result must return `PASS` before customer views are published.
 
+## Power BI PostgreSQL views
+
+After creating all domain analytics views, create the curated Power BI layer:
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/analytics/power_bi_views.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/analytics/power_bi_views_validation.sql
+```
+
+The layer provides `vw_sales_performance`, `vw_inventory_aging`, `vw_service_performance`, `vw_customer_value`, and a cross-domain `vw_dealership_performance`. Detail views preserve canonical grains, while the dealership scorecard aggregates each subject before joining to prevent duplicated measures. See `docs/power_bi_views.md` for grains, modeling guidance, privacy decisions, and refresh validation requirements.
+
 ## Development guardrails
 
 - Never commit `.env`, credentials, raw operational data, generated output, or local Power BI files.
