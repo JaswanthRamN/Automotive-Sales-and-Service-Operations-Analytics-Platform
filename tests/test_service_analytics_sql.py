@@ -44,6 +44,8 @@ def test_detail_view_preserves_appointment_grain_and_safe_revenue_join() -> None
     assert "FROM staging.service_appointments a" in detail
     assert "LEFT JOIN analytics.fact_service fs" in detail
     assert "ON fs.appointment_id = a.appointment_id" in detail
+    assert "advisor.dealership_key = dl.dealership_key" in detail
+    assert "advisor.role = 'Service Advisor'" in detail
     assert "a.appointment_id" in detail
     assert "COALESCE(fs.service_revenue, 0)" in detail
 

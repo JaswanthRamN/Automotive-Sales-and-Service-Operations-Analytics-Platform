@@ -1,5 +1,27 @@
 BEGIN;
 
+-- Cleaned staging loads must preserve their declared business-key grains.
+-- These indexes fail fast on duplicate source rows and support the warehouse
+-- lookup from service orders to appointments.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_staging_customers_id
+    ON staging.customers (customer_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_staging_vehicles_id
+    ON staging.vehicles (vehicle_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_staging_dealerships_id
+    ON staging.dealerships (dealership_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_staging_employees_id
+    ON staging.employees (employee_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_staging_sales_id
+    ON staging.sales (sale_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_staging_inventory_grain
+    ON staging.inventory (inventory_id, snapshot_date);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_staging_service_appointments_id
+    ON staging.service_appointments (appointment_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_staging_service_orders_id
+    ON staging.service_orders (service_order_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_staging_service_orders_appointment
+    ON staging.service_orders (appointment_id);
+
 CREATE INDEX IF NOT EXISTS idx_dim_customer_location
     ON analytics.dim_customer (state, city);
 CREATE INDEX IF NOT EXISTS idx_dim_vehicle_hierarchy

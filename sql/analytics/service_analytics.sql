@@ -81,7 +81,10 @@ JOIN analytics.dim_vehicle v
 JOIN analytics.dim_dealership dl
   ON dl.dealership_id = a.dealership_id
 JOIN analytics.dim_employee advisor
-  ON advisor.employee_id = a.service_advisor_id AND advisor.is_current
+  ON advisor.employee_id = a.service_advisor_id
+ AND advisor.dealership_key = dl.dealership_key
+ AND advisor.role = 'Service Advisor'
+ AND advisor.is_current
 JOIN analytics.dim_service svc
   ON svc.service_type = a.service_type
 LEFT JOIN analytics.fact_service fs

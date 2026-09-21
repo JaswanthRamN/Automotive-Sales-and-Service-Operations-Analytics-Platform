@@ -97,12 +97,18 @@ SELECT s.sale_id, TO_CHAR(s.sale_date::DATE, 'YYYYMMDD')::INTEGER,
        c.customer_key, v.vehicle_key, d.dealership_key, e.employee_key,
        s.sales_channel, s.list_price::NUMERIC(14, 2), s.discount_amount::NUMERIC(14, 2),
        s.sale_price::NUMERIC(14, 2), s.vehicle_cost::NUMERIC(14, 2),
-       s.gross_profit::NUMERIC(14, 2), 1, s.payment_type, s.sale_status
+       s.gross_profit::NUMERIC(14, 2),
+       CASE WHEN s.sale_status = 'Returned' THEN -1 ELSE 1 END,
+       s.payment_type, s.sale_status
 FROM staging.sales s
 JOIN analytics.dim_customer c ON c.customer_id = s.customer_id AND c.is_current
 JOIN analytics.dim_vehicle v ON v.vehicle_id = s.vehicle_id
 JOIN analytics.dim_dealership d ON d.dealership_id = s.dealership_id
-JOIN analytics.dim_employee e ON e.employee_id = s.salesperson_id AND e.is_current;
+JOIN analytics.dim_employee e
+  ON e.employee_id = s.salesperson_id
+ AND e.dealership_key = d.dealership_key
+ AND e.role = 'Sales Consultant'
+ AND e.is_current;
 
 INSERT INTO analytics.fact_inventory (
     inventory_id, snapshot_date_key, vehicle_key, dealership_key, acquired_date,
@@ -131,12 +137,23 @@ SELECT so.service_order_id, so.appointment_id,
        so.parts_revenue::NUMERIC(14, 2), so.discount_amount::NUMERIC(14, 2),
        so.service_revenue::NUMERIC(14, 2), 1
 FROM staging.service_orders so
-JOIN staging.service_appointments sa ON sa.appointment_id = so.appointment_id
+JOIN staging.service_appointments sa
+  ON sa.appointment_id = so.appointment_id
+ AND sa.customer_id = so.customer_id
+ AND sa.vehicle_id = so.vehicle_id
+ AND sa.dealership_id = so.dealership_id
+ AND sa.service_advisor_id = so.service_advisor_id
 JOIN analytics.dim_customer c ON c.customer_id = so.customer_id AND c.is_current
 JOIN analytics.dim_vehicle v ON v.vehicle_id = so.vehicle_id
 JOIN analytics.dim_dealership d ON d.dealership_id = so.dealership_id
 JOIN analytics.dim_employee advisor
-  ON advisor.employee_id = so.service_advisor_id AND advisor.is_current
+  ON advisor.employee_id = so.service_advisor_id
+ AND advisor.dealership_key = d.dealership_key
+ AND advisor.role = 'Service Advisor'
+ AND advisor.is_current
 JOIN analytics.dim_employee technician
-  ON technician.employee_id = so.technician_id AND technician.is_current
+  ON technician.employee_id = so.technician_id
+ AND technician.dealership_key = d.dealership_key
+ AND technician.role = 'Service Technician'
+ AND technician.is_current
 JOIN analytics.dim_service svc ON svc.service_type = sa.service_type;

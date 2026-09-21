@@ -36,7 +36,10 @@ CREATE TABLE IF NOT EXISTS analytics.fact_sales (
         AND vehicle_cost >= 0 AND ABS((list_price - discount_amount) - sale_price) <= 0.02
         AND ABS((sale_price - vehicle_cost) - gross_profit) <= 0.02
     ),
-    CONSTRAINT ck_fact_sales_units CHECK (unit_quantity IN (-1, 1))
+    CONSTRAINT ck_fact_sales_units CHECK (
+        (sale_status = 'Returned' AND unit_quantity = -1)
+        OR (sale_status IN ('Completed', 'Cancelled') AND unit_quantity = 1)
+    )
 );
 
 CREATE TABLE IF NOT EXISTS analytics.fact_inventory (

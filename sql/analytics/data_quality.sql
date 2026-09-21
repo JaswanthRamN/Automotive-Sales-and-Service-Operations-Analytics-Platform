@@ -149,6 +149,45 @@ WITH quality_checks AS (
        OR d.dealership_key IS NULL OR a.employee_key IS NULL
        OR t.employee_key IS NULL OR s.service_key IS NULL
 
+    -- Role and dealership alignment is not expressible with ordinary FKs.
+    UNION ALL
+    SELECT 'relationship_integrity', 'fact_sales salesperson alignment', COUNT(*)::BIGINT,
+           'The salesperson must be a Sales Consultant assigned to the sale dealership.'
+    FROM analytics.fact_sales f
+    JOIN analytics.dim_employee e ON e.employee_key = f.salesperson_key
+    WHERE e.role <> 'Sales Consultant'
+       OR e.dealership_key <> f.dealership_key
+
+    UNION ALL
+    SELECT 'relationship_integrity', 'fact_service employee alignment', COUNT(*)::BIGINT,
+           'Service advisors and technicians must have the expected role and match the service dealership.'
+    FROM analytics.fact_service f
+    JOIN analytics.dim_employee a ON a.employee_key = f.service_advisor_key
+    JOIN analytics.dim_employee t ON t.employee_key = f.technician_key
+    WHERE a.role <> 'Service Advisor'
+       OR t.role <> 'Service Technician'
+       OR a.dealership_key <> f.dealership_key
+       OR t.dealership_key <> f.dealership_key
+
+    UNION ALL
+    SELECT 'relationship_integrity', 'service order appointment mismatch', COUNT(*)::BIGINT,
+           'Order and appointment customer, vehicle, dealership, and advisor identifiers must agree.'
+    FROM staging.service_orders so
+    JOIN staging.service_appointments sa ON sa.appointment_id = so.appointment_id
+    WHERE sa.customer_id IS DISTINCT FROM so.customer_id
+       OR sa.vehicle_id IS DISTINCT FROM so.vehicle_id
+       OR sa.dealership_id IS DISTINCT FROM so.dealership_id
+       OR sa.service_advisor_id IS DISTINCT FROM so.service_advisor_id
+
+    UNION ALL
+    SELECT 'relationship_integrity', 'fact_sales unit sign', COUNT(*)::BIGINT,
+           'Returned sales must use -1 units; completed and cancelled rows must use +1.'
+    FROM analytics.fact_sales
+    WHERE unit_quantity IS DISTINCT FROM CASE
+        WHEN sale_status = 'Returned' THEN -1
+        ELSE 1
+    END
+
     -- Invalid business and fact dates.
     UNION ALL
     SELECT 'invalid_dates', 'dimension dates outside valid order', COUNT(*)::BIGINT,

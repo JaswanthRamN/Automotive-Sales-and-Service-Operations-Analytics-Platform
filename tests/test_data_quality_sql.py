@@ -44,6 +44,7 @@ def test_every_requested_quality_category_is_covered() -> None:
         "invalid_dates",
         "invalid_prices",
         "negative_revenue",
+        "relationship_integrity",
     } <= {category.lower() for category in categories}
 
 
@@ -99,6 +100,19 @@ def test_price_revenue_and_date_formulas_match_schema_contract() -> None:
     assert "service_revenue < 0" in sql
     assert "acquired_date > d.full_date" in sql
     assert "opened_at > f.promised_at" in sql
+
+
+def test_cross_table_roles_relationships_and_return_signs_are_checked() -> None:
+    sql = _sql()
+
+    assert "fact_sales salesperson alignment" in sql
+    assert "fact_service employee alignment" in sql
+    assert "service order appointment mismatch" in sql
+    assert "fact_sales unit sign" in sql
+    assert "e.dealership_key <> f.dealership_key" in sql
+    assert "a.role <> 'Service Advisor'" in sql
+    assert "t.role <> 'Service Technician'" in sql
+    assert "WHEN sale_status = 'Returned' THEN -1" in sql
 
 
 def test_query_returns_one_check_row_per_union_branch() -> None:

@@ -154,3 +154,17 @@ def test_warehouse_transform_is_full_refresh_and_loads_all_targets() -> None:
         "fact_service",
     ):
         assert f"INSERT INTO analytics.{table}" in sql
+
+
+def test_warehouse_transform_signs_returns_and_enforces_employee_alignment() -> None:
+    sql = (PROJECT_ROOT / "sql" / "etl" / "001_load_warehouse.sql").read_text(encoding="utf-8")
+
+    assert "CASE WHEN s.sale_status = 'Returned' THEN -1 ELSE 1 END" in sql
+    assert "e.dealership_key = d.dealership_key" in sql
+    assert "e.role = 'Sales Consultant'" in sql
+    assert "advisor.role = 'Service Advisor'" in sql
+    assert "technician.role = 'Service Technician'" in sql
+    assert "sa.customer_id = so.customer_id" in sql
+    assert "sa.vehicle_id = so.vehicle_id" in sql
+    assert "sa.dealership_id = so.dealership_id" in sql
+    assert "sa.service_advisor_id = so.service_advisor_id" in sql

@@ -12,6 +12,7 @@ DDL_FILES = [
     "003_create_dimensions.sql",
     "004_create_facts.sql",
     "005_create_indexes.sql",
+    "006_harden_sales_return_constraint.sql",
 ]
 
 
@@ -112,6 +113,8 @@ def test_fact_grain_and_measure_constraints_are_present() -> None:
 
     assert "sale_id VARCHAR(20) NOT NULL UNIQUE" in sales
     assert "ABS((list_price - discount_amount) - sale_price) <= 0.02" in sales
+    assert "sale_status = 'Returned' AND unit_quantity = -1" in sales
+    assert "sale_status IN ('Completed', 'Cancelled') AND unit_quantity = 1" in sales
     assert "uq_fact_inventory_vehicle_snapshot" in inventory
     assert "days_in_inventory >= 0" in inventory
     assert "service_order_id VARCHAR(20) NOT NULL UNIQUE" in service
@@ -130,6 +133,33 @@ def test_foreign_keys_and_common_filter_paths_are_indexed() -> None:
     assert len(indexes) >= 16
     indexed_tables = {table for _, table, _ in indexes}
     assert {"dim_customer", "dim_vehicle", "dim_employee", "fact_sales", "fact_inventory", "fact_service"} <= indexed_tables
+
+
+def test_staging_business_grains_are_unique_and_support_service_join() -> None:
+    ddl = _ddl()
+
+    for index_name in (
+        "uq_staging_customers_id",
+        "uq_staging_vehicles_id",
+        "uq_staging_dealerships_id",
+        "uq_staging_employees_id",
+        "uq_staging_sales_id",
+        "uq_staging_inventory_grain",
+        "uq_staging_service_appointments_id",
+        "uq_staging_service_orders_id",
+        "uq_staging_service_orders_appointment",
+    ):
+        assert f"CREATE UNIQUE INDEX IF NOT EXISTS {index_name}" in ddl
+
+
+def test_return_constraint_upgrade_repairs_existing_rows_before_enforcement() -> None:
+    migration = (SQL_DIR / "006_harden_sales_return_constraint.sql").read_text(encoding="utf-8")
+
+    update_position = migration.index("UPDATE analytics.fact_sales")
+    constraint_position = migration.index("ADD CONSTRAINT ck_fact_sales_units")
+    assert update_position < constraint_position
+    assert "WHEN sale_status = 'Returned' THEN -1" in migration
+    assert "WHERE unit_quantity IS DISTINCT FROM CASE" in migration
 
 
 def test_postgresql_specific_types_and_identity_keys_are_used() -> None:
