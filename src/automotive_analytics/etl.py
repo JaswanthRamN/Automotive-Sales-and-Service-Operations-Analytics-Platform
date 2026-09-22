@@ -196,7 +196,7 @@ def execute_sql_file(connection: Connection, path: Path) -> None:
 
 
 def apply_schema(connection: Connection, sql_dir: Path) -> None:
-    for path in sorted(sql_dir.glob("[0-9][0-9][0-5]_*.sql")):
+    for path in sorted(sql_dir.glob("[0-9][0-9][0-9]_*.sql")):
         execute_sql_file(connection, path)
 
 

@@ -34,6 +34,8 @@ logs/
 airflow.db
 airflow.cfg
 airflow-webserver.pid
+airflow/logs/
+airflow/dags/__pycache__/
 
 # Power BI local artifacts
 *.pbix
@@ -44,4 +46,3 @@ airflow-webserver.pid
 .vscode/
 .DS_Store
 Thumbs.db
-

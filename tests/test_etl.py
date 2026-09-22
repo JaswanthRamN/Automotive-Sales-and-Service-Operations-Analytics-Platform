@@ -17,6 +17,7 @@ from automotive_analytics.etl import (
     ETLConfigError,
     ETLValidationError,
     WAREHOUSE_SOURCE_COUNTS,
+    apply_schema,
     split_sql_statements,
     validate_database_counts,
     validate_processed_files,
@@ -113,6 +114,26 @@ def test_sql_splitter_omits_transaction_wrappers() -> None:
         "CREATE SCHEMA IF NOT EXISTS staging",
         "CREATE TABLE staging.x (id INT)",
     ]
+
+
+def test_schema_application_includes_all_three_digit_migrations(tmp_path: Path) -> None:
+    for name, statement in (
+        ("005_indexes.sql", "SELECT 5;"),
+        ("006_hardening.sql", "SELECT 6;"),
+    ):
+        (tmp_path / name).write_text(statement, encoding="utf-8")
+
+    class RecordingConnection:
+        def __init__(self) -> None:
+            self.statements: list[str] = []
+
+        def exec_driver_sql(self, statement: str) -> None:
+            self.statements.append(statement)
+
+    connection = RecordingConnection()
+    apply_schema(connection, tmp_path)  # type: ignore[arg-type]
+
+    assert connection.statements == ["SELECT 5", "SELECT 6"]
 
 
 def test_count_validation_accepts_matching_counts() -> None:

@@ -10,7 +10,7 @@ Day 1 establishes the repository structure and development tooling only. ETL pip
 
 ```text
 .
-|-- airflow/             # Future Airflow configuration and DAG support
+|-- airflow/             # Airflow DAGs and local runtime home
 |-- api/                 # Future FastAPI application
 |-- config/              # Future application configuration
 |-- dashboards/          # Future Power BI documentation and assets
@@ -121,6 +121,12 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/analytics/data_quality.sql
 ```
 
 The query returns one row per duplicate, duplicate-fact, missing-key, orphan, date, price, or negative-revenue check. Each row includes a `PASS`/`FAIL` status, failed-row count, and remediation detail; the warehouse passes only when every result is `PASS`.
+
+## Airflow orchestration
+
+The `automotive_sales_service_etl` DAG runs the ordered workflow `extract → validate → transform → load → quality_check`. It discovers the processed CSV inputs, validates their contracts and relationships, refreshes PostgreSQL staging, transactionally rebuilds the warehouse, reconciles row counts, and fails unless every warehouse quality check passes.
+
+Configure PostgreSQL and the `AIRFLOW_*` values from `.env.example`, then place or symlink `airflow/dags/automotive_etl_dag.py` in the scheduler DAG folder. Retries, retry delay, owner, schedule, source location, credentials, SSL mode, and environment-file location are controlled through environment variables. Task failures are logged with DAG, task, run, and exception context.
 
 ## Sales analytics SQL
 
