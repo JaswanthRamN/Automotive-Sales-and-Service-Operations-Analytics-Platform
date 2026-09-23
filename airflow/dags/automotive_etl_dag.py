@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+import hashlib
 import logging
 import os
 from pathlib import Path
@@ -10,6 +11,7 @@ import sys
 from typing import Any
 
 from airflow.models import DAG
+from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
 from sqlalchemy import create_engine
 
@@ -59,12 +61,38 @@ def _etl_config() -> ETLConfig:
     return ETLConfig.from_env(env_file=env_file)
 
 
-def _extract(**_: Any) -> dict[str, dict[str, int]]:
+def _file_fingerprint(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        while chunk := source.read(1024 * 1024):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _assert_manifest_unchanged(manifest: dict[str, dict[str, Any]]) -> None:
+    source = _processed_dir()
+    if set(manifest) != set(DATASETS):
+        raise ETLValidationError("Extract manifest does not contain the complete dataset set")
+    for dataset, metadata in manifest.items():
+        path = source / f"{dataset}.csv"
+        if not path.is_file():
+            raise ETLValidationError(f"Processed file disappeared after extraction: {path}")
+        stat = path.stat()
+        if (
+            stat.st_size != metadata["size_bytes"]
+            or stat.st_mtime_ns != metadata["modified_ns"]
+            or _file_fingerprint(path) != metadata["sha256"]
+        ):
+            raise ETLValidationError(f"{dataset}.csv changed after extraction")
+
+
+def _extract(**_: Any) -> dict[str, dict[str, Any]]:
     """Discover the complete processed-file input set without mutating it."""
 
     source = _processed_dir()
-    manifest: dict[str, dict[str, int]] = {}
+    manifest: dict[str, dict[str, Any]] = {}
     try:
+        LOGGER.info("Starting source extraction from %s", source)
         for dataset in DATASETS:
             path = source / f"{dataset}.csv"
             if not path.is_file():
@@ -73,6 +101,7 @@ def _extract(**_: Any) -> dict[str, dict[str, int]]:
             manifest[dataset] = {
                 "size_bytes": stat.st_size,
                 "modified_ns": stat.st_mtime_ns,
+                "sha256": _file_fingerprint(path),
             }
         LOGGER.info("Extracted manifest for %d datasets from %s", len(manifest), source)
         return manifest
@@ -85,13 +114,10 @@ def _validate(**context: Any) -> dict[str, int]:
     """Validate schema, values, relationships, and a stable extract manifest."""
 
     try:
+        LOGGER.info("Starting processed-data validation")
         manifest = context["ti"].xcom_pull(task_ids="extract")
-        source = _processed_dir()
-        for dataset, metadata in manifest.items():
-            stat = (source / f"{dataset}.csv").stat()
-            if stat.st_size != metadata["size_bytes"] or stat.st_mtime_ns != metadata["modified_ns"]:
-                raise ETLValidationError(f"{dataset}.csv changed after extraction")
-        counts = validate_processed_files(source)
+        _assert_manifest_unchanged(manifest)
+        counts = validate_processed_files(_processed_dir())
         LOGGER.info("Validated %,d rows across %d datasets", sum(counts.values()), len(counts))
         return counts
     except Exception:
@@ -99,12 +125,14 @@ def _validate(**context: Any) -> dict[str, int]:
         raise
 
 
-def _transform(**_: Any) -> None:
+def _transform(**context: Any) -> None:
     """Apply schema migrations and replace the PostgreSQL staging layer."""
 
     config = _etl_config()
     engine = create_engine(config.database_url, pool_pre_ping=True, connect_args={"connect_timeout": 10})
     try:
+        LOGGER.info("Starting idempotent schema and staging refresh")
+        _assert_manifest_unchanged(context["ti"].xcom_pull(task_ids="extract"))
         with engine.begin() as connection:
             apply_schema(connection, PROJECT_ROOT / "sql")
             load_staging(connection, _processed_dir())
@@ -133,6 +161,7 @@ def _load(**context: Any) -> dict[str, int]:
         *WAREHOUSE_SOURCE_COUNTS,
     ]
     try:
+        LOGGER.info("Starting transactional warehouse refresh")
         with engine.begin() as connection:
             staging_counts = query_counts(connection, staging_tables)
             load_warehouse(connection, PROJECT_ROOT / "sql" / "etl" / "001_load_warehouse.sql")
@@ -154,8 +183,11 @@ def _quality_check(**_: Any) -> None:
     engine = create_engine(config.database_url, pool_pre_ping=True, connect_args={"connect_timeout": 10})
     quality_sql = (PROJECT_ROOT / "sql" / "analytics" / "data_quality.sql").read_text(encoding="utf-8")
     try:
+        LOGGER.info("Starting warehouse quality gate")
         with engine.connect() as connection:
             rows = connection.exec_driver_sql(quality_sql).mappings().all()
+        if not rows:
+            raise ETLValidationError("Warehouse quality query returned no checks")
         failures = [row for row in rows if row["status"] != "PASS"]
         if failures:
             details = "; ".join(
@@ -181,12 +213,28 @@ def _log_task_failure(context: dict[str, Any]) -> None:
     )
 
 
+def _log_task_retry(context: dict[str, Any]) -> None:
+    task = context.get("task_instance")
+    LOGGER.warning(
+        "Retrying DAG task: dag_id=%s task_id=%s run_id=%s try_number=%s exception=%r",
+        context.get("dag").dag_id if context.get("dag") else DAG_ID,
+        task.task_id if task else "unknown",
+        context.get("run_id", "unknown"),
+        getattr(task, "try_number", "unknown"),
+        context.get("exception"),
+    )
+
+
 default_args = {
     "owner": os.getenv("AIRFLOW_DAG_OWNER", "analytics-engineering"),
     "depends_on_past": False,
     "retries": _integer_env("AIRFLOW_DAG_RETRIES", 2),
     "retry_delay": timedelta(minutes=_integer_env("AIRFLOW_RETRY_DELAY_MINUTES", 5, minimum=1)),
+    "retry_exponential_backoff": True,
+    "max_retry_delay": timedelta(minutes=_integer_env("AIRFLOW_MAX_RETRY_DELAY_MINUTES", 30, minimum=1)),
+    "execution_timeout": timedelta(minutes=_integer_env("AIRFLOW_TASK_TIMEOUT_MINUTES", 60, minimum=1)),
     "on_failure_callback": _log_task_failure,
+    "on_retry_callback": _log_task_retry,
 }
 
 with DAG(
@@ -203,6 +251,13 @@ with DAG(
     validate = PythonOperator(task_id="validate", python_callable=_validate)
     transform = PythonOperator(task_id="transform", python_callable=_transform)
     load = PythonOperator(task_id="load", python_callable=_load)
-    quality_check = PythonOperator(task_id="quality_check", python_callable=_quality_check)
+    quality_check = PythonOperator(
+        task_id="quality_check",
+        python_callable=_quality_check,
+        execution_timeout=timedelta(
+            minutes=_integer_env("AIRFLOW_QUALITY_TIMEOUT_MINUTES", 15, minimum=1)
+        ),
+    )
+    reporting_ready = EmptyOperator(task_id="reporting_ready", trigger_rule="all_success")
 
-    extract >> validate >> transform >> load >> quality_check
+    extract >> validate >> transform >> load >> quality_check >> reporting_ready

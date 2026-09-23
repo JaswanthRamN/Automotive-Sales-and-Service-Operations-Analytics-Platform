@@ -124,9 +124,9 @@ The query returns one row per duplicate, duplicate-fact, missing-key, orphan, da
 
 ## Airflow orchestration
 
-The `automotive_sales_service_etl` DAG runs the ordered workflow `extract → validate → transform → load → quality_check`. It discovers the processed CSV inputs, validates their contracts and relationships, refreshes PostgreSQL staging, transactionally rebuilds the warehouse, reconciles row counts, and fails unless every warehouse quality check passes.
+The `automotive_sales_service_etl` DAG runs the ordered workflow `extract → validate → transform → load → quality_check → reporting_ready`. It fingerprints the processed CSV inputs, validates their contracts and relationships, refreshes PostgreSQL staging idempotently, transactionally rebuilds the warehouse, reconciles row counts, and fails unless every warehouse quality check passes. The all-success `reporting_ready` marker cannot run after a failed quality gate.
 
-Configure PostgreSQL and the `AIRFLOW_*` values from `.env.example`, then place or symlink `airflow/dags/automotive_etl_dag.py` in the scheduler DAG folder. Retries, retry delay, owner, schedule, source location, credentials, SSL mode, and environment-file location are controlled through environment variables. Task failures are logged with DAG, task, run, and exception context.
+Configure PostgreSQL and the `AIRFLOW_*` values from `.env.example`, then place or symlink `airflow/dags/automotive_etl_dag.py` in the scheduler DAG folder. Retries, bounded exponential retry delays, task and quality-check timeouts, owner, schedule, source location, credentials, SSL mode, and environment-file location are controlled through environment variables. Task failures and retries are logged with DAG, task, run, attempt, and exception context.
 
 ## Sales analytics SQL
 
