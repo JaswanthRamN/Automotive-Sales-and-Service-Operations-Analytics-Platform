@@ -11,7 +11,7 @@ Day 1 establishes the repository structure and development tooling only. ETL pip
 ```text
 .
 |-- airflow/             # Airflow DAGs and local runtime home
-|-- api/                 # Future FastAPI application
+|-- api/                 # Read-only FastAPI analytics application
 |-- config/              # Future application configuration
 |-- dashboards/          # Future Power BI documentation and assets
 |-- data/
@@ -127,6 +127,16 @@ The query returns one row per duplicate, duplicate-fact, missing-key, orphan, da
 The `automotive_sales_service_etl` DAG runs the ordered workflow `extract → validate → transform → load → quality_check → reporting_ready`. It fingerprints the processed CSV inputs, validates their contracts and relationships, refreshes PostgreSQL staging idempotently, transactionally rebuilds the warehouse, reconciles row counts, and fails unless every warehouse quality check passes. The all-success `reporting_ready` marker cannot run after a failed quality gate.
 
 Configure PostgreSQL and the `AIRFLOW_*` values from `.env.example`, then place or symlink `airflow/dags/automotive_etl_dag.py` in the scheduler DAG folder. Retries, bounded exponential retry delays, task and quality-check timeouts, owner, schedule, source location, credentials, SSL mode, and environment-file location are controlled through environment variables. Task failures and retries are logged with DAG, task, run, attempt, and exception context.
+
+## FastAPI analytics service
+
+Configure PostgreSQL and the `API_*` connection-pool settings from `.env.example`, then start the read-only API from the repository root:
+
+```bash
+uvicorn api.main:app --host 0.0.0.0 --port 8000
+```
+
+The service exposes `/health`, `/sales`, `/inventory`, `/service`, `/customers`, and `/dealerships`. Analytics endpoints read only from the curated PostgreSQL views, use bounded `limit`/`offset` pagination, and return documented Pydantic contracts. Swagger UI is available at `/docs`, ReDoc at `/redoc`, and the OpenAPI document at `/openapi.json`. Database failures return a sanitized `503` response and are logged without exposing credentials.
 
 ## Sales analytics SQL
 
