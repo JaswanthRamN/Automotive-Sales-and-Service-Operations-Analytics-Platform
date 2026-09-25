@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import date, time
 from decimal import Decimal
+from enum import Enum
 from typing import Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -16,6 +17,86 @@ class APIModel(BaseModel):
 class HealthResponse(APIModel):
     status: str
     database: str
+
+
+class SaleStatus(str, Enum):
+    completed = "Completed"
+    returned = "Returned"
+
+
+class PaymentType(str, Enum):
+    finance = "Finance"
+    cash = "Cash"
+    lease = "Lease"
+
+
+class AgingBucket(str, Enum):
+    days_0_30 = "0-30"
+    days_31_60 = "31-60"
+    days_61_90 = "61-90"
+    days_91_120 = "91-120"
+    days_120_plus = "120+"
+
+
+class InventoryStatus(str, Enum):
+    available = "Available"
+    reserved = "Reserved"
+    in_transit = "In Transit"
+    demonstrator = "Demonstrator"
+    sold_not_delivered = "Sold Not Delivered"
+    unavailable = "Unavailable"
+
+
+class ServiceType(str, Enum):
+    maintenance = "Maintenance"
+    repair = "Repair"
+    inspection = "Inspection"
+    recall = "Recall"
+    tires = "Tires"
+
+
+class AppointmentStatus(str, Enum):
+    completed = "Completed"
+    cancelled = "Cancelled"
+    no_show = "No Show"
+    scheduled = "Scheduled"
+
+
+class RelationshipSegment(str, Enum):
+    sales_only = "Sales Only"
+    service_only = "Service Only"
+    sales_and_service = "Sales + Service"
+    no_activity = "No Activity"
+
+
+class LifecycleSegment(str, Enum):
+    prospect = "Prospect"
+    new_customer = "New Customer"
+    repeat_customer = "Repeat Customer"
+
+
+class ActivitySegment(str, Enum):
+    active = "Active"
+    inactive = "Inactive"
+    never_active = "Never Active"
+
+
+class SalesSummary(APIModel):
+    sales_transactions: int
+    units_sold: int
+    revenue: Decimal
+    gross_profit: Decimal
+    gross_margin_percent: Decimal | None = None
+    average_selling_price: Decimal | None = None
+
+
+class ServiceRevenueSummary(APIModel):
+    appointments: int
+    completed_appointments: int
+    repair_orders: int
+    service_revenue: Decimal
+    completion_rate_percent: Decimal | None = None
+    average_repair_order: Decimal | None = None
 
 
 class SalesRecord(APIModel):

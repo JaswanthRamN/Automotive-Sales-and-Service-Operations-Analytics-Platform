@@ -138,6 +138,8 @@ uvicorn api.main:app --host 0.0.0.0 --port 8000
 
 The service exposes `/health`, `/sales`, `/inventory`, `/service`, `/customers`, and `/dealerships`. Analytics endpoints read only from the curated PostgreSQL views, use bounded `limit`/`offset` pagination, and return documented Pydantic contracts. Swagger UI is available at `/docs`, ReDoc at `/redoc`, and the OpenAPI document at `/openapi.json`. Database failures return a sanitized `503` response and are logged without exposing credentials.
 
+Focused analytics routes include `/sales/summary`, `/sales/performance`, `/inventory/aging`, `/inventory/slow-moving`, `/service/revenue`, `/service/performance`, `/customers/value`, and `/dealerships/performance`. Supported filters include validated date ranges, dealership, brand, payment and sale status, inventory bucket/status, service type/status, customer segments, state/region, and minimum value or revenue thresholds. Filter values are bound parameters and paginated routes enforce a maximum page size of 500.
+
 ## Sales analytics SQL
 
 Create the sales analytics views after the warehouse is loaded:
