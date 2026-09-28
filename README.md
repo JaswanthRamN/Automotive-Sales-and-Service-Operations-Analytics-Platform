@@ -140,6 +140,12 @@ The service exposes `/health`, `/sales`, `/inventory`, `/service`, `/customers`,
 
 Focused analytics routes include `/sales/summary`, `/sales/performance`, `/inventory/aging`, `/inventory/slow-moving`, `/service/revenue`, `/service/performance`, `/customers/value`, and `/dealerships/performance`. Supported filters include validated date ranges, dealership, brand, payment and sale status, inventory bucket/status, service type/status, customer segments, state/region, and minimum value or revenue thresholds. Filter values are bound parameters and paginated routes enforce a maximum page size of 500.
 
+Run the comprehensive API tests with the enforced 80% coverage threshold:
+
+```bash
+python -m pytest tests/test_api.py tests/test_api_database.py --cov=api --cov-report=term-missing --cov-fail-under=80
+```
+
 ## Sales analytics SQL
 
 Create the sales analytics views after the warehouse is loaded:
