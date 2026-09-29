@@ -4,6 +4,10 @@ A portfolio-ready analytics platform for automotive sales and service operations
 
 ## Current status
 
+Docker setup and startup instructions are in [docs/docker.md](docs/docker.md).
+The Compose stack includes PostgreSQL, FastAPI, and Airflow with persistent
+volumes, isolated metadata storage, initialization jobs, and health checks.
+
 Day 1 establishes the repository structure and development tooling only. ETL pipelines, database objects, APIs, Airflow DAGs, Docker services, and Power BI assets are intentionally deferred to later project days.
 
 ## Project structure

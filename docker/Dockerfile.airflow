@@ -1,0 +1,9 @@
+FROM apache/airflow:3.3.2-python3.12
+USER airflow
+COPY docker/requirements-app.txt /tmp/requirements-app.txt
+RUN pip install --no-cache-dir "apache-airflow==3.3.2" -r /tmp/requirements-app.txt && pip check
+ENV PYTHONPATH=/opt/project/src
+WORKDIR /opt/project
+COPY --chown=airflow:root src ./src
+COPY --chown=airflow:root sql ./sql
+COPY --chown=airflow:root airflow/dags ./airflow/dags

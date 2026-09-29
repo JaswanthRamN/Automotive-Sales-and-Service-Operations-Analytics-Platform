@@ -10,9 +10,14 @@ from pathlib import Path
 import sys
 from typing import Any
 
-from airflow.models import DAG
-from airflow.operators.empty import EmptyOperator
-from airflow.operators.python import PythonOperator
+try:
+    from airflow.sdk import DAG
+    from airflow.providers.standard.operators.empty import EmptyOperator
+    from airflow.providers.standard.operators.python import PythonOperator
+except ImportError:  # Compatibility with existing Airflow 2 test environments.
+    from airflow.models import DAG
+    from airflow.operators.empty import EmptyOperator
+    from airflow.operators.python import PythonOperator
 from sqlalchemy import create_engine
 
 
@@ -118,7 +123,7 @@ def _validate(**context: Any) -> dict[str, int]:
         manifest = context["ti"].xcom_pull(task_ids="extract")
         _assert_manifest_unchanged(manifest)
         counts = validate_processed_files(_processed_dir())
-        LOGGER.info("Validated %,d rows across %d datasets", sum(counts.values()), len(counts))
+        LOGGER.info("Validated %d rows across %d datasets", sum(counts.values()), len(counts))
         return counts
     except Exception:
         LOGGER.exception("Processed-data validation failed")
@@ -167,7 +172,7 @@ def _load(**context: Any) -> dict[str, int]:
             load_warehouse(connection, PROJECT_ROOT / "sql" / "etl" / "001_load_warehouse.sql")
             warehouse_counts = query_counts(connection, warehouse_tables)
             validate_database_counts(source_counts, staging_counts, warehouse_counts)
-        LOGGER.info("Warehouse load committed with %,d rows", sum(warehouse_counts.values()))
+        LOGGER.info("Warehouse load committed with %d rows", sum(warehouse_counts.values()))
         return warehouse_counts
     except Exception:
         LOGGER.exception("Warehouse load failed; transaction rolled back")

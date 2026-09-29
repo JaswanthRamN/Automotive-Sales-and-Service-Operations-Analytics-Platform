@@ -1,0 +1,17 @@
+.git
+.venv
+venv
+.env
+.env.*
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.coverage
+htmlcov
+data
+logs
+airflow/logs
+airflow/airflow.db
+airflow/airflow.cfg
+*.pbix
+*.pbit
