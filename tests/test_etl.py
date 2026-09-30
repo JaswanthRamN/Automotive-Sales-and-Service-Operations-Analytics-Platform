@@ -99,6 +99,27 @@ def test_processed_file_preflight_rejects_schema_drift(tmp_path: Path) -> None:
         validate_processed_files(tmp_path)
 
 
+@pytest.mark.parametrize("value", [0.5, 2147483648, float("inf")])
+def test_preflight_rejects_invalid_integer_mileage(tmp_path: Path, value) -> None:
+    write_datasets(tmp_path, CONFIG)
+    path = tmp_path / "vehicles.csv"
+    frame = pd.read_csv(path)
+    frame["mileage_at_acquisition"] = frame["mileage_at_acquisition"].astype(float)
+    frame.loc[0, "mileage_at_acquisition"] = value
+    frame.to_csv(path, index=False)
+    with pytest.raises(ETLValidationError, match="valid whole numbers"):
+        validate_processed_files(tmp_path)
+
+
+def test_preflight_accepts_decimal_serialized_integer_mileage(tmp_path: Path) -> None:
+    write_datasets(tmp_path, CONFIG)
+    path = tmp_path / "vehicles.csv"
+    frame = pd.read_csv(path)
+    frame["mileage_at_acquisition"] = frame["mileage_at_acquisition"].astype(float)
+    frame.to_csv(path, index=False)
+    assert validate_processed_files(tmp_path)["vehicles"] == CONFIG.vehicles
+
+
 def test_processed_file_preflight_rejects_missing_dataset(tmp_path: Path) -> None:
     write_datasets(tmp_path, CONFIG)
     (tmp_path / "sales.csv").unlink()

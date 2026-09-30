@@ -163,6 +163,16 @@ def validate_processed_files(processed_dir: str | Path) -> dict[str, int]:
                 f"{name}.csv columns do not match the staging contract; expected {columns}, got {actual}"
             )
     validation = build_validation_report(datasets)
+    # Pandas may serialize integral columns as decimal text after cleaning.
+    # Accept whole-valued decimals but reject silent rounding or SQL overflow.
+    for dataset, column, maximum in (
+        ("vehicles", "model_year", 32767),
+        ("vehicles", "mileage_at_acquisition", 2147483647),
+        ("inventory", "days_in_inventory", 2147483647),
+    ):
+        values = pd.to_numeric(datasets[dataset][column], errors="coerce")
+        if (values.isna() | (values % 1 != 0) | (values < 0) | (values > maximum)).any():
+            raise ETLValidationError(f"{dataset}.{column} must contain valid whole numbers")
     failures = validation[(validation["severity"] == "ERROR") & (validation["status"] == "FAIL")]
     foreign_keys = build_foreign_key_report(datasets)
     fk_failures = foreign_keys[foreign_keys["status"] != "PASS"]

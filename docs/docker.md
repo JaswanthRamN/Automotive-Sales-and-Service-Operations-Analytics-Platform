@@ -52,7 +52,56 @@ docker compose down
 intend to permanently delete those volumes. Changing database credentials in
 `.env` does not change credentials in an already initialized PostgreSQL volume.
 
-Verification on the current Windows host: Docker is absent, so build/start and
-container health checks could not run. Local pytest checks validate the Compose
-structure and bootstrap behavior; they do not establish image build or runtime
-success. Run the commands above once Docker Desktop is installed and running.
+## Clean-environment verification
+
+The following deliberately deletes this project's PostgreSQL, Airflow metadata,
+and log volumes. Raw and processed CSV files on the host are preserved.
+
+```sh
+docker compose down -v
+docker compose up --build -d
+docker compose ps -a
+docker compose exec airflow-dag-processor airflow dags list-import-errors
+docker compose exec airflow-scheduler airflow dags list
+```
+
+Wait until `automotive_sales_service_etl` appears in the DAG list before
+unpausing it; service health does not guarantee initial DAG registration is
+finished. Then trigger a run (use a distinct run ID for each manual invocation):
+
+```sh
+docker compose exec airflow-scheduler airflow dags unpause automotive_sales_service_etl
+docker compose exec airflow-scheduler airflow dags trigger --run-id clean_environment_verification automotive_sales_service_etl
+docker compose exec airflow-scheduler airflow dags list-runs automotive_sales_service_etl
+```
+
+Wait for a successful run, including `quality_check` and `reporting_ready`.
+Unpausing also permits the configured daily schedule; `max_active_runs=1`
+serializes scheduled and manual runs. Run the read-only integration verifier
+from the host's activated Python environment:
+
+```sh
+python scripts/verify_runtime.py
+python -m pytest --cov=api --cov=src --cov-report=term
+```
+
+The verifier compares processed CSV counts with staging and warehouse counts,
+requires every SQL quality check to PASS, checks all paginated API routes and
+OpenAPI, exercises filters/pagination/422 responses/empty results, and compares
+API sales and service totals with PostgreSQL. Configure `API_BASE_URL` when
+using a non-default API port and match host PostgreSQL settings in `.env` to
+the published database port. The verifier has a bounded database connection
+timeout and fails with a nonzero exit code on a mismatch.
+
+Verified on Windows with Docker's Linux engine on September 30, 2026: clean
+build/start succeeded, initialization jobs exited 0, all six long-running
+services were healthy, no DAG import errors occurred, and manual and scheduled
+ETL runs succeeded. All 28 SQL quality checks passed for 84,668 processed rows
+across eight datasets. The warehouse contains 15,500 sales facts, 4,500 inventory
+facts and 15,500 service facts. Integer conversions accept whole-valued decimal
+CSV text (such as `0.0`); preflight rejects fractional/overflow values before
+loading to prevent SQL rounding or truncation.
+
+Final host pytest result: 121 passed, one skipped, with 83.97% combined API/src
+coverage. The skipped test requires a local Airflow installation; the actual
+container DAG import and complete task execution were verified separately.

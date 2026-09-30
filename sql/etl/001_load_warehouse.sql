@@ -65,8 +65,8 @@ INSERT INTO analytics.dim_vehicle (
     vehicle_id, vin, make, model, model_year, body_type, fuel_type, color,
     vehicle_condition, mileage_at_acquisition, manufacturer_msrp
 )
-SELECT vehicle_id, vin, make, model, model_year::SMALLINT, body_type, fuel_type,
-       NULLIF(color, ''), vehicle_condition, mileage_at_acquisition::INTEGER,
+SELECT vehicle_id, vin, make, model, model_year::NUMERIC::SMALLINT, body_type, fuel_type,
+       NULLIF(color, ''), vehicle_condition, mileage_at_acquisition::NUMERIC::INTEGER,
        manufacturer_msrp::NUMERIC(14, 2)
 FROM staging.vehicles;
 
@@ -116,7 +116,7 @@ INSERT INTO analytics.fact_inventory (
 )
 SELECT i.inventory_id, TO_CHAR(i.snapshot_date::DATE, 'YYYYMMDD')::INTEGER,
        v.vehicle_key, d.dealership_key, i.acquired_date::DATE, i.inventory_status,
-       i.carrying_cost::NUMERIC(14, 2), i.days_in_inventory::INTEGER,
+       i.carrying_cost::NUMERIC(14, 2), i.days_in_inventory::NUMERIC::INTEGER,
        i.slow_moving_flag::BOOLEAN, 1
 FROM staging.inventory i
 JOIN analytics.dim_vehicle v ON v.vehicle_id = i.vehicle_id
