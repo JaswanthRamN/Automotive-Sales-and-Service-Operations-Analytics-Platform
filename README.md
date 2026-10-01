@@ -239,6 +239,11 @@ The layer provides `vw_sales_performance`, `vw_inventory_aging`, `vw_service_per
 
 ## Development guardrails
 
+Power BI star schema design, relationships, date roles, Power Query templates,
+and read-only model validation are documented in
+[powerbi/documentation/](powerbi/documentation/README.md). This design phase
+does not create report or dashboard pages.
+
 - Never commit `.env`, credentials, raw operational data, generated output, or local Power BI files.
 - Keep business logic inside the `automotive_analytics` package and cover it with tests.
 - Implement each project day only after inspecting and testing the existing repository.
