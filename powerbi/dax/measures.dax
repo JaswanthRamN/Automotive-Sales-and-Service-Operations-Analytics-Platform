@@ -1,0 +1,90 @@
+// Query-scoped catalogue. Run in DAX Query View after loading the documented model.
+// For permanent measures, copy each expression into its named home table.
+DEFINE
+    MEASURE DimCustomer[Revenue] = COALESCE(SUM(FactSales[revenue]), 0)
+    MEASURE FactSales[Units Sold] = COALESCE(SUM(FactSales[units_sold]), 0)
+    MEASURE FactSales[ASP] = DIVIDE([Revenue], [Units Sold])
+    MEASURE FactSales[Gross Profit] = COALESCE(SUM(FactSales[gross_profit]), 0)
+    MEASURE FactSales[Gross Margin %] = DIVIDE([Gross Profit], [Revenue])
+
+    // One global snapshot across dealerships/vehicles, constrained by as-of date.
+    // REMOVEFILTERS does not bypass RLS; "global" means within authorized data.
+    MEASURE FactInventory[Inventory Snapshot Key] =
+        VAR AsOfDate = MAX(DimSnapshotDate[full_date])
+        VAR AsOfKey = YEAR(AsOfDate) * 10000 + MONTH(AsOfDate) * 100 + DAY(AsOfDate)
+        RETURN IF(NOT ISBLANK(AsOfDate),
+            CALCULATE(MAX(FactInventory[snapshot_date_key]), REMOVEFILTERS(),
+                FactInventory[snapshot_date_key] <= AsOfKey))
+    MEASURE FactInventory[Inventory Units] =
+        VAR SnapshotKey = [Inventory Snapshot Key]
+        RETURN IF(ISBLANK(SnapshotKey), BLANK(),
+            COALESCE(CALCULATE(SUM(FactInventory[inventory_units]),
+                REMOVEFILTERS(DimSnapshotDate),
+                TREATAS({SnapshotKey}, FactInventory[snapshot_date_key])), 0))
+    MEASURE FactInventory[Inventory Value] =
+        VAR SnapshotKey = [Inventory Snapshot Key]
+        RETURN IF(ISBLANK(SnapshotKey), BLANK(),
+            COALESCE(CALCULATE(SUM(FactInventory[inventory_value]),
+                REMOVEFILTERS(DimSnapshotDate),
+                TREATAS({SnapshotKey}, FactInventory[snapshot_date_key])), 0))
+    MEASURE FactInventory[Average Days in Inventory] =
+        VAR SnapshotKey = [Inventory Snapshot Key]
+        VAR WeightedDays = CALCULATE(
+            SUMX(FactInventory, FactInventory[days_in_inventory] * FactInventory[inventory_units]),
+            REMOVEFILTERS(DimSnapshotDate),
+            TREATAS({SnapshotKey}, FactInventory[snapshot_date_key]))
+        RETURN IF(NOT ISBLANK(SnapshotKey), DIVIDE(WeightedDays, [Inventory Units]))
+    MEASURE FactInventory[Slow-Moving Vehicles] =
+        VAR SnapshotKey = [Inventory Snapshot Key]
+        RETURN IF(ISBLANK(SnapshotKey), BLANK(),
+            COALESCE(CALCULATE(DISTINCTCOUNTNOBLANK(FactInventory[vehicle_key]),
+                REMOVEFILTERS(DimSnapshotDate),
+                TREATAS({SnapshotKey}, FactInventory[snapshot_date_key]),
+                KEEPFILTERS(FactInventory[days_in_inventory] > 90),
+                KEEPFILTERS(FactInventory[inventory_units] > 0)), 0))
+
+    MEASURE FactService[Service Revenue] =
+        COALESCE(CALCULATE(SUM(FactService[service_revenue]),
+            USERELATIONSHIP(DimDate[date_key], FactService[completed_date_key]),
+            KEEPFILTERS(FactService[order_status] = "Completed")), 0)
+    MEASURE FactService[Service Orders] =
+        COALESCE(CALCULATE(DISTINCTCOUNTNOBLANK(FactService[service_order_id]),
+            USERELATIONSHIP(DimDate[date_key], FactService[completed_date_key]),
+            KEEPFILTERS(FactService[order_status] = "Completed")), 0)
+    MEASURE FactService[Average Repair Order] = DIVIDE([Service Revenue], [Service Orders])
+    MEASURE FactService[Completion Rate] =
+        DIVIDE(SUM(FactService[completed_appointment_count]),
+               SUM(FactService[completion_eligible_count]))
+
+    MEASURE DimCustomer[Customers] = COALESCE(DISTINCTCOUNTNOBLANK(DimCustomer[customer_id]), 0)
+    MEASURE DimCustomer[Qualifying Interactions] =
+        VAR SalesInteractions = CALCULATE(DISTINCTCOUNTNOBLANK(FactSales[sale_id]),
+            KEEPFILTERS(FactSales[sale_status] = "Completed"))
+        RETURN COALESCE(SalesInteractions, 0) + [Service Orders]
+    MEASURE DimCustomer[Qualifying Customers] =
+        COALESCE(SUMX(VALUES(DimCustomer[customer_id]),
+            IF(NOT ISBLANK(DimCustomer[customer_id]) &&
+               CALCULATE([Qualifying Interactions]) >= 1, 1, 0)), 0)
+    MEASURE DimCustomer[Repeat Customers] =
+        COALESCE(SUMX(VALUES(DimCustomer[customer_id]),
+            IF(NOT ISBLANK(DimCustomer[customer_id]) &&
+               CALCULATE([Qualifying Interactions]) >= 2, 1, 0)), 0)
+    MEASURE DimCustomer[Repeat Rate] = DIVIDE([Repeat Customers], [Qualifying Customers])
+    MEASURE DimCustomer[Customer Lifetime Value] =
+        VAR AsOfDate = MAX(DimDate[full_date])
+        RETURN IF(NOT ISBLANK(AsOfDate),
+            CALCULATE([Revenue] + [Service Revenue],
+                FILTER(ALL(DimDate), DimDate[full_date] <= AsOfDate)))
+
+EVALUATE
+    ROW(
+        "Revenue", [Revenue], "Units Sold", [Units Sold], "ASP", [ASP],
+        "Gross Profit", [Gross Profit], "Gross Margin %", [Gross Margin %],
+        "Inventory Units", [Inventory Units], "Inventory Value", [Inventory Value],
+        "Average Days in Inventory", [Average Days in Inventory],
+        "Slow-Moving Vehicles", [Slow-Moving Vehicles],
+        "Service Revenue", [Service Revenue], "Service Orders", [Service Orders],
+        "Average Repair Order", [Average Repair Order], "Completion Rate", [Completion Rate],
+        "Customers", [Customers], "Repeat Customers", [Repeat Customers],
+        "Repeat Rate", [Repeat Rate], "Customer Lifetime Value", [Customer Lifetime Value]
+    )

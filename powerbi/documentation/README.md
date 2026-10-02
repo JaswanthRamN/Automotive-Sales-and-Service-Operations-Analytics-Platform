@@ -42,6 +42,10 @@ SQL syntax errors stop execution; returned FAIL rows must also block acceptance
 even if psql itself exits zero. Configure connection details via your usual
 PostgreSQL environment/service profile; do not place passwords in the command.
 
+The [DAX catalogue](dax_measures.md) documents all 17 requested KPIs and three
+helpers. [measures.dax](../dax/measures.dax) is a query for the loaded model;
+[dax_reference.sql](dax_reference.sql) gives unfiltered reconciliation values.
+
 Microsoft references: [star schema guidance](https://learn.microsoft.com/en-us/power-bi/guidance/star-schema),
 [active and inactive relationships](https://learn.microsoft.com/en-us/power-bi/guidance/relationships-active-inactive),
 [date tables](https://learn.microsoft.com/en-us/power-bi/guidance/model-date-tables),
