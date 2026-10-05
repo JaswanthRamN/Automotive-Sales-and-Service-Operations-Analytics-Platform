@@ -1,0 +1,1668 @@
+{
+  "name": "ExecutiveOverview",
+  "compatibilityLevel": 1600,
+  "model": {
+    "culture": "en-US",
+    "defaultPowerBIDataSourceVersion": "powerBI_V3",
+    "annotations": [
+      {
+        "name": "PBI_TimeIntelligenceEnabled",
+        "value": "0"
+      }
+    ],
+    "expressions": [
+      {
+        "name": "UseLocalSnapshot",
+        "kind": "m",
+        "expression": "true"
+      },
+      {
+        "name": "SnapshotFolder",
+        "kind": "m",
+        "expression": "\"C:/Users/abhig/Downloads/Automotive-Sales-and-Service-Operations-Analytics-Platform/powerbi/ExecutiveOverview/local-data\""
+      },
+      {
+        "name": "Server",
+        "kind": "m",
+        "expression": "\"localhost:5432\""
+      },
+      {
+        "name": "Database",
+        "kind": "m",
+        "expression": "\"automotive_analytics\""
+      }
+    ],
+    "tables": [
+      {
+        "name": "DimDate",
+        "columns": [
+          {
+            "name": "date_key",
+            "dataType": "int64",
+            "sourceColumn": "date_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "full_date",
+            "dataType": "dateTime",
+            "sourceColumn": "full_date",
+            "summarizeBy": "none",
+            "formatString": "yyyy-MM-dd",
+            "annotations": [
+              {
+                "name": "UnderlyingDateTimeDataType",
+                "value": "Date"
+              }
+            ],
+            "isKey": true
+          },
+          {
+            "name": "calendar_year",
+            "dataType": "int64",
+            "sourceColumn": "calendar_year",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "month_number",
+            "dataType": "int64",
+            "sourceColumn": "month_number",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "month_name",
+            "dataType": "string",
+            "sourceColumn": "month_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "year_month",
+            "dataType": "string",
+            "sourceColumn": "year_month",
+            "summarizeBy": "none",
+            "sortByColumn": "year_month_sort"
+          },
+          {
+            "name": "year_month_sort",
+            "dataType": "int64",
+            "sourceColumn": "year_month_sort",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "quarter_number",
+            "dataType": "int64",
+            "sourceColumn": "quarter_number",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "DimDate",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = if UseLocalSnapshot then Table.FromRecords(Json.Document(File.Contents(SnapshotFolder & \"/DimDate.json\")))",
+                "        else Value.NativeQuery(PostgreSQL.Database(Server, Database, [CreateNavigationProperties=false]), \"WITH bounds AS (\n SELECT date_trunc('year',min(d))::date lo,\n (date_trunc('year',max(d))+interval '1 year - 1 day')::date hi\n FROM (SELECT full_date d FROM analytics.dim_date\n UNION ALL SELECT promised_at::date FROM analytics.fact_service) events\n), calendar AS (SELECT generate_series(lo,hi,interval '1 day')::date full_date FROM bounds)\nSELECT to_char(full_date,'YYYYMMDD')::integer date_key, full_date,\n extract(year FROM full_date)::integer calendar_year,\n extract(month FROM full_date)::integer month_number,\n to_char(full_date,'Month') month_name, to_char(full_date,'YYYY-MM') year_month,\n to_char(full_date,'YYYYMM')::integer year_month_sort,\n extract(quarter FROM full_date)::integer quarter_number FROM calendar\", null, [EnableFolding=true]),",
+                "    Typed = Table.TransformColumnTypes(Source, {{\"date_key\", Int64.Type}, {\"full_date\", type date}, {\"calendar_year\", Int64.Type}, {\"month_number\", Int64.Type}, {\"month_name\", type text}, {\"year_month\", type text}, {\"year_month_sort\", Int64.Type}, {\"quarter_number\", Int64.Type}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ],
+        "dataCategory": "Time"
+      },
+      {
+        "name": "DimSnapshotDate",
+        "columns": [
+          {
+            "name": "date_key",
+            "dataType": "int64",
+            "sourceColumn": "date_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "full_date",
+            "dataType": "dateTime",
+            "sourceColumn": "full_date",
+            "summarizeBy": "none",
+            "formatString": "yyyy-MM-dd",
+            "annotations": [
+              {
+                "name": "UnderlyingDateTimeDataType",
+                "value": "Date"
+              }
+            ],
+            "isKey": true
+          },
+          {
+            "name": "calendar_year",
+            "dataType": "int64",
+            "sourceColumn": "calendar_year",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "month_number",
+            "dataType": "int64",
+            "sourceColumn": "month_number",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "month_name",
+            "dataType": "string",
+            "sourceColumn": "month_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "year_month",
+            "dataType": "string",
+            "sourceColumn": "year_month",
+            "summarizeBy": "none",
+            "sortByColumn": "year_month_sort"
+          },
+          {
+            "name": "year_month_sort",
+            "dataType": "int64",
+            "sourceColumn": "year_month_sort",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "quarter_number",
+            "dataType": "int64",
+            "sourceColumn": "quarter_number",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "DimSnapshotDate",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = if UseLocalSnapshot then Table.FromRecords(Json.Document(File.Contents(SnapshotFolder & \"/DimSnapshotDate.json\")))",
+                "        else Value.NativeQuery(PostgreSQL.Database(Server, Database, [CreateNavigationProperties=false]), \"WITH bounds AS (\n SELECT date_trunc('year',min(d))::date lo,\n (date_trunc('year',max(d))+interval '1 year - 1 day')::date hi\n FROM (SELECT full_date d FROM analytics.dim_date\n UNION ALL SELECT promised_at::date FROM analytics.fact_service) events\n), calendar AS (SELECT generate_series(lo,hi,interval '1 day')::date full_date FROM bounds)\nSELECT to_char(full_date,'YYYYMMDD')::integer date_key, full_date,\n extract(year FROM full_date)::integer calendar_year,\n extract(month FROM full_date)::integer month_number,\n to_char(full_date,'Month') month_name, to_char(full_date,'YYYY-MM') year_month,\n to_char(full_date,'YYYYMM')::integer year_month_sort,\n extract(quarter FROM full_date)::integer quarter_number FROM calendar\", null, [EnableFolding=true]),",
+                "    Typed = Table.TransformColumnTypes(Source, {{\"date_key\", Int64.Type}, {\"full_date\", type date}, {\"calendar_year\", Int64.Type}, {\"month_number\", Int64.Type}, {\"month_name\", type text}, {\"year_month\", type text}, {\"year_month_sort\", Int64.Type}, {\"quarter_number\", Int64.Type}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ],
+        "dataCategory": "Time"
+      },
+      {
+        "name": "DimCustomer",
+        "columns": [
+          {
+            "name": "customer_key",
+            "dataType": "int64",
+            "sourceColumn": "customer_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "customer_id",
+            "dataType": "string",
+            "sourceColumn": "customer_id",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "customer_type",
+            "dataType": "string",
+            "sourceColumn": "customer_type",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "city",
+            "dataType": "string",
+            "sourceColumn": "city",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "state",
+            "dataType": "string",
+            "sourceColumn": "state",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "postal_code",
+            "dataType": "string",
+            "sourceColumn": "postal_code",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "customer_since_date",
+            "dataType": "dateTime",
+            "sourceColumn": "customer_since_date",
+            "summarizeBy": "none",
+            "formatString": "yyyy-MM-dd",
+            "annotations": [
+              {
+                "name": "UnderlyingDateTimeDataType",
+                "value": "Date"
+              }
+            ]
+          },
+          {
+            "name": "effective_from",
+            "dataType": "dateTime",
+            "sourceColumn": "effective_from",
+            "summarizeBy": "none",
+            "formatString": "yyyy-MM-dd",
+            "annotations": [
+              {
+                "name": "UnderlyingDateTimeDataType",
+                "value": "Date"
+              }
+            ]
+          },
+          {
+            "name": "effective_to",
+            "dataType": "dateTime",
+            "sourceColumn": "effective_to",
+            "summarizeBy": "none",
+            "formatString": "yyyy-MM-dd",
+            "annotations": [
+              {
+                "name": "UnderlyingDateTimeDataType",
+                "value": "Date"
+              }
+            ]
+          },
+          {
+            "name": "is_current",
+            "dataType": "boolean",
+            "sourceColumn": "is_current",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "DimCustomer",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = if UseLocalSnapshot then Table.FromRecords(Json.Document(File.Contents(SnapshotFolder & \"/DimCustomer.json\")))",
+                "        else Value.NativeQuery(PostgreSQL.Database(Server, Database, [CreateNavigationProperties=false]), \"SELECT customer_key,customer_id,customer_type,city,state,postal_code,customer_since_date,effective_from,effective_to,is_current FROM analytics.dim_customer\", null, [EnableFolding=true]),",
+                "    Typed = Table.TransformColumnTypes(Source, {{\"customer_key\", Int64.Type}, {\"customer_id\", type text}, {\"customer_type\", type text}, {\"city\", type text}, {\"state\", type text}, {\"postal_code\", type text}, {\"customer_since_date\", type date}, {\"effective_from\", type date}, {\"effective_to\", type date}, {\"is_current\", type logical}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Revenue",
+            "expression": "COALESCE(SUM(FactSales[revenue]), 0)",
+            "formatString": "#,0.00",
+            "isHidden": false
+          },
+          {
+            "name": "Customers",
+            "expression": "COALESCE(DISTINCTCOUNTNOBLANK(DimCustomer[customer_id]), 0)",
+            "formatString": "#,0",
+            "isHidden": false
+          },
+          {
+            "name": "Qualifying Interactions",
+            "expression": "VAR SalesInteractions = CALCULATE(DISTINCTCOUNTNOBLANK(FactSales[sale_id]),\n            KEEPFILTERS(FactSales[sale_status] = \"Completed\"))\n        RETURN COALESCE(SalesInteractions, 0) + [Service Orders]",
+            "formatString": "#,0",
+            "isHidden": true
+          },
+          {
+            "name": "Qualifying Customers",
+            "expression": "COALESCE(SUMX(VALUES(DimCustomer[customer_id]),\n            IF(NOT ISBLANK(DimCustomer[customer_id]) &&\n               CALCULATE([Qualifying Interactions]) >= 1, 1, 0)), 0)",
+            "formatString": "#,0",
+            "isHidden": true
+          },
+          {
+            "name": "Repeat Customers",
+            "expression": "COALESCE(SUMX(VALUES(DimCustomer[customer_id]),\n            IF(NOT ISBLANK(DimCustomer[customer_id]) &&\n               CALCULATE([Qualifying Interactions]) >= 2, 1, 0)), 0)",
+            "formatString": "#,0",
+            "isHidden": false
+          },
+          {
+            "name": "Repeat Rate",
+            "expression": "DIVIDE([Repeat Customers], [Qualifying Customers])",
+            "formatString": "0.00%",
+            "isHidden": false
+          },
+          {
+            "name": "Customer Lifetime Value",
+            "expression": "VAR AsOfDate = MAX(DimDate[full_date])\n        RETURN IF(NOT ISBLANK(AsOfDate),\n            CALCULATE([Revenue] + [Service Revenue],\n                FILTER(ALL(DimDate), DimDate[full_date] <= AsOfDate)))",
+            "formatString": "#,0.00",
+            "isHidden": false
+          }
+        ]
+      },
+      {
+        "name": "DimVehicle",
+        "columns": [
+          {
+            "name": "vehicle_key",
+            "dataType": "int64",
+            "sourceColumn": "vehicle_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "vehicle_id",
+            "dataType": "string",
+            "sourceColumn": "vehicle_id",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "brand",
+            "dataType": "string",
+            "sourceColumn": "brand",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "model",
+            "dataType": "string",
+            "sourceColumn": "model",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "model_year",
+            "dataType": "int64",
+            "sourceColumn": "model_year",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "vehicle_type",
+            "dataType": "string",
+            "sourceColumn": "vehicle_type",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "fuel_type",
+            "dataType": "string",
+            "sourceColumn": "fuel_type",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "vehicle_condition",
+            "dataType": "string",
+            "sourceColumn": "vehicle_condition",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "color",
+            "dataType": "string",
+            "sourceColumn": "color",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "DimVehicle",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = if UseLocalSnapshot then Table.FromRecords(Json.Document(File.Contents(SnapshotFolder & \"/DimVehicle.json\")))",
+                "        else Value.NativeQuery(PostgreSQL.Database(Server, Database, [CreateNavigationProperties=false]), \"SELECT vehicle_key,vehicle_id,make AS brand,model,model_year,body_type AS vehicle_type,fuel_type,vehicle_condition,color FROM analytics.dim_vehicle\", null, [EnableFolding=true]),",
+                "    Typed = Table.TransformColumnTypes(Source, {{\"vehicle_key\", Int64.Type}, {\"vehicle_id\", type text}, {\"brand\", type text}, {\"model\", type text}, {\"model_year\", Int64.Type}, {\"vehicle_type\", type text}, {\"fuel_type\", type text}, {\"vehicle_condition\", type text}, {\"color\", type text}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "DimDealership",
+        "columns": [
+          {
+            "name": "dealership_key",
+            "dataType": "int64",
+            "sourceColumn": "dealership_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "dealership_id",
+            "dataType": "string",
+            "sourceColumn": "dealership_id",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "dealership_name",
+            "dataType": "string",
+            "sourceColumn": "dealership_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "city",
+            "dataType": "string",
+            "sourceColumn": "city",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "state",
+            "dataType": "string",
+            "sourceColumn": "state",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "region",
+            "dataType": "string",
+            "sourceColumn": "region",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "postal_code",
+            "dataType": "string",
+            "sourceColumn": "postal_code",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "opened_date",
+            "dataType": "dateTime",
+            "sourceColumn": "opened_date",
+            "summarizeBy": "none",
+            "formatString": "yyyy-MM-dd",
+            "annotations": [
+              {
+                "name": "UnderlyingDateTimeDataType",
+                "value": "Date"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "DimDealership",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = if UseLocalSnapshot then Table.FromRecords(Json.Document(File.Contents(SnapshotFolder & \"/DimDealership.json\")))",
+                "        else Value.NativeQuery(PostgreSQL.Database(Server, Database, [CreateNavigationProperties=false]), \"SELECT dealership_key,dealership_id,dealership_name,city,state,region,postal_code,opened_date FROM analytics.dim_dealership\", null, [EnableFolding=true]),",
+                "    Typed = Table.TransformColumnTypes(Source, {{\"dealership_key\", Int64.Type}, {\"dealership_id\", type text}, {\"dealership_name\", type text}, {\"city\", type text}, {\"state\", type text}, {\"region\", type text}, {\"postal_code\", type text}, {\"opened_date\", type date}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "DimService",
+        "columns": [
+          {
+            "name": "service_key",
+            "dataType": "int64",
+            "sourceColumn": "service_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "service_type",
+            "dataType": "string",
+            "sourceColumn": "service_type",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "service_category",
+            "dataType": "string",
+            "sourceColumn": "service_category",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "is_active",
+            "dataType": "boolean",
+            "sourceColumn": "is_active",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "DimService",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = if UseLocalSnapshot then Table.FromRecords(Json.Document(File.Contents(SnapshotFolder & \"/DimService.json\")))",
+                "        else Value.NativeQuery(PostgreSQL.Database(Server, Database, [CreateNavigationProperties=false]), \"SELECT service_key,service_type,service_category,is_active FROM analytics.dim_service\", null, [EnableFolding=true]),",
+                "    Typed = Table.TransformColumnTypes(Source, {{\"service_key\", Int64.Type}, {\"service_type\", type text}, {\"service_category\", type text}, {\"is_active\", type logical}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "FactSales",
+        "columns": [
+          {
+            "name": "sales_key",
+            "dataType": "int64",
+            "sourceColumn": "sales_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "sale_id",
+            "dataType": "string",
+            "sourceColumn": "sale_id",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "sale_date_key",
+            "dataType": "int64",
+            "sourceColumn": "sale_date_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "customer_key",
+            "dataType": "int64",
+            "sourceColumn": "customer_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "vehicle_key",
+            "dataType": "int64",
+            "sourceColumn": "vehicle_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "dealership_key",
+            "dataType": "int64",
+            "sourceColumn": "dealership_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "salesperson_key",
+            "dataType": "int64",
+            "sourceColumn": "salesperson_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "sales_channel",
+            "dataType": "string",
+            "sourceColumn": "sales_channel",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "payment_type",
+            "dataType": "string",
+            "sourceColumn": "payment_type",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "sale_status",
+            "dataType": "string",
+            "sourceColumn": "sale_status",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "units_sold",
+            "dataType": "int64",
+            "sourceColumn": "units_sold",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "list_price",
+            "dataType": "decimal",
+            "sourceColumn": "list_price",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "discount_amount",
+            "dataType": "decimal",
+            "sourceColumn": "discount_amount",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "revenue",
+            "dataType": "decimal",
+            "sourceColumn": "revenue",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "vehicle_cost",
+            "dataType": "decimal",
+            "sourceColumn": "vehicle_cost",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "gross_profit",
+            "dataType": "decimal",
+            "sourceColumn": "gross_profit",
+            "summarizeBy": "none",
+            "isHidden": true
+          }
+        ],
+        "partitions": [
+          {
+            "name": "FactSales",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = if UseLocalSnapshot then Table.FromRecords(Json.Document(File.Contents(SnapshotFolder & \"/FactSales.json\")))",
+                "        else Value.NativeQuery(PostgreSQL.Database(Server, Database, [CreateNavigationProperties=false]), \"SELECT sales_key,sale_id,sale_date_key,customer_key,vehicle_key,dealership_key,salesperson_key,sales_channel,payment_type,sale_status,units_sold,list_price,discount_amount,revenue,vehicle_cost,gross_profit FROM analytics.vw_sales_detail\", null, [EnableFolding=true]),",
+                "    Typed = Table.TransformColumnTypes(Source, {{\"sales_key\", Int64.Type}, {\"sale_id\", type text}, {\"sale_date_key\", Int64.Type}, {\"customer_key\", Int64.Type}, {\"vehicle_key\", Int64.Type}, {\"dealership_key\", Int64.Type}, {\"salesperson_key\", Int64.Type}, {\"sales_channel\", type text}, {\"payment_type\", type text}, {\"sale_status\", type text}, {\"units_sold\", Int64.Type}, {\"list_price\", Currency.Type}, {\"discount_amount\", Currency.Type}, {\"revenue\", Currency.Type}, {\"vehicle_cost\", Currency.Type}, {\"gross_profit\", Currency.Type}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Units Sold",
+            "expression": "COALESCE(SUM(FactSales[units_sold]), 0)",
+            "formatString": "#,0",
+            "isHidden": false
+          },
+          {
+            "name": "ASP",
+            "expression": "DIVIDE([Revenue], [Units Sold])",
+            "formatString": "#,0.00",
+            "isHidden": false
+          },
+          {
+            "name": "Gross Profit",
+            "expression": "COALESCE(SUM(FactSales[gross_profit]), 0)",
+            "formatString": "#,0.00",
+            "isHidden": false
+          },
+          {
+            "name": "Gross Margin %",
+            "expression": "DIVIDE([Gross Profit], [Revenue])",
+            "formatString": "0.00%",
+            "isHidden": false
+          }
+        ]
+      },
+      {
+        "name": "FactInventory",
+        "columns": [
+          {
+            "name": "inventory_key",
+            "dataType": "int64",
+            "sourceColumn": "inventory_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "inventory_id",
+            "dataType": "string",
+            "sourceColumn": "inventory_id",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "snapshot_date_key",
+            "dataType": "int64",
+            "sourceColumn": "snapshot_date_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "vehicle_key",
+            "dataType": "int64",
+            "sourceColumn": "vehicle_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "dealership_key",
+            "dataType": "int64",
+            "sourceColumn": "dealership_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "acquired_date",
+            "dataType": "dateTime",
+            "sourceColumn": "acquired_date",
+            "summarizeBy": "none",
+            "isHidden": true,
+            "formatString": "yyyy-MM-dd",
+            "annotations": [
+              {
+                "name": "UnderlyingDateTimeDataType",
+                "value": "Date"
+              }
+            ]
+          },
+          {
+            "name": "acquired_date_key",
+            "dataType": "int64",
+            "sourceColumn": "acquired_date_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "inventory_status",
+            "dataType": "string",
+            "sourceColumn": "inventory_status",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "inventory_units",
+            "dataType": "int64",
+            "sourceColumn": "inventory_units",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "inventory_value",
+            "dataType": "decimal",
+            "sourceColumn": "inventory_value",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "days_in_inventory",
+            "dataType": "int64",
+            "sourceColumn": "days_in_inventory",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "aging_bucket",
+            "dataType": "string",
+            "sourceColumn": "aging_bucket",
+            "summarizeBy": "none",
+            "isHidden": false,
+            "sortByColumn": "aging_bucket_sort"
+          },
+          {
+            "name": "aging_bucket_sort",
+            "dataType": "int64",
+            "sourceColumn": "aging_bucket_sort",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "is_slow_moving",
+            "dataType": "boolean",
+            "sourceColumn": "is_slow_moving",
+            "summarizeBy": "none",
+            "isHidden": true
+          }
+        ],
+        "partitions": [
+          {
+            "name": "FactInventory",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = if UseLocalSnapshot then Table.FromRecords(Json.Document(File.Contents(SnapshotFolder & \"/FactInventory.json\")))",
+                "        else Value.NativeQuery(PostgreSQL.Database(Server, Database, [CreateNavigationProperties=false]), \"SELECT inventory_key,inventory_id,snapshot_date_key,vehicle_key,dealership_key,acquired_date,to_char(acquired_date,'YYYYMMDD')::integer acquired_date_key,inventory_status,inventory_units,inventory_value,days_in_inventory,aging_bucket,aging_bucket_sort,is_slow_moving FROM analytics.vw_inventory_detail\", null, [EnableFolding=true]),",
+                "    Typed = Table.TransformColumnTypes(Source, {{\"inventory_key\", Int64.Type}, {\"inventory_id\", type text}, {\"snapshot_date_key\", Int64.Type}, {\"vehicle_key\", Int64.Type}, {\"dealership_key\", Int64.Type}, {\"acquired_date\", type date}, {\"acquired_date_key\", Int64.Type}, {\"inventory_status\", type text}, {\"inventory_units\", Int64.Type}, {\"inventory_value\", Currency.Type}, {\"days_in_inventory\", Int64.Type}, {\"aging_bucket\", type text}, {\"aging_bucket_sort\", Int64.Type}, {\"is_slow_moving\", type logical}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Inventory Snapshot Key",
+            "expression": "VAR AsOfDate = MAX(DimSnapshotDate[full_date])\n        VAR AsOfKey = YEAR(AsOfDate) * 10000 + MONTH(AsOfDate) * 100 + DAY(AsOfDate)\n        RETURN IF(NOT ISBLANK(AsOfDate),\n            CALCULATE(MAX(FactInventory[snapshot_date_key]), REMOVEFILTERS(),\n                FactInventory[snapshot_date_key] <= AsOfKey))",
+            "formatString": "#,0",
+            "isHidden": true
+          },
+          {
+            "name": "Inventory Units",
+            "expression": "VAR SnapshotKey = [Inventory Snapshot Key]\n        RETURN IF(ISBLANK(SnapshotKey), BLANK(),\n            COALESCE(CALCULATE(SUM(FactInventory[inventory_units]),\n                REMOVEFILTERS(DimSnapshotDate),\n                TREATAS({SnapshotKey}, FactInventory[snapshot_date_key])), 0))",
+            "formatString": "#,0",
+            "isHidden": false
+          },
+          {
+            "name": "Inventory Value",
+            "expression": "VAR SnapshotKey = [Inventory Snapshot Key]\n        RETURN IF(ISBLANK(SnapshotKey), BLANK(),\n            COALESCE(CALCULATE(SUM(FactInventory[inventory_value]),\n                REMOVEFILTERS(DimSnapshotDate),\n                TREATAS({SnapshotKey}, FactInventory[snapshot_date_key])), 0))",
+            "formatString": "#,0.00",
+            "isHidden": false
+          },
+          {
+            "name": "Average Days in Inventory",
+            "expression": "VAR SnapshotKey = [Inventory Snapshot Key]\n        VAR WeightedDays = CALCULATE(\n            SUMX(FactInventory, FactInventory[days_in_inventory] * FactInventory[inventory_units]),\n            REMOVEFILTERS(DimSnapshotDate),\n            TREATAS({SnapshotKey}, FactInventory[snapshot_date_key]))\n        RETURN IF(NOT ISBLANK(SnapshotKey), DIVIDE(WeightedDays, [Inventory Units]))",
+            "formatString": "#,0.00",
+            "isHidden": false
+          },
+          {
+            "name": "Slow-Moving Vehicles",
+            "expression": "VAR SnapshotKey = [Inventory Snapshot Key]\n        RETURN IF(ISBLANK(SnapshotKey), BLANK(),\n            COALESCE(CALCULATE(DISTINCTCOUNTNOBLANK(FactInventory[vehicle_key]),\n                REMOVEFILTERS(DimSnapshotDate),\n                TREATAS({SnapshotKey}, FactInventory[snapshot_date_key]),\n                KEEPFILTERS(FactInventory[days_in_inventory] > 90),\n                KEEPFILTERS(FactInventory[inventory_units] > 0)), 0))",
+            "formatString": "#,0",
+            "isHidden": false
+          },
+          {
+            "name": "Executive Inventory Value",
+            "expression": "VAR AsOfDate = MAX(DimDate[full_date]) RETURN IF(NOT ISBLANK(AsOfDate), CALCULATE([Inventory Value], REMOVEFILTERS(DimSnapshotDate), TREATAS({AsOfDate}, DimSnapshotDate[full_date])))",
+            "formatString": "#,0.00"
+          },
+          {
+            "name": "Executive Inventory Units",
+            "expression": "VAR AsOfDate = MAX(DimDate[full_date]) RETURN IF(NOT ISBLANK(AsOfDate), CALCULATE([Inventory Units], REMOVEFILTERS(DimSnapshotDate), TREATAS({AsOfDate}, DimSnapshotDate[full_date])))",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Executive Snapshot Date",
+            "expression": "VAR AsOfDate = MAX(DimDate[full_date]) VAR SnapshotKey = CALCULATE([Inventory Snapshot Key], REMOVEFILTERS(DimSnapshotDate), TREATAS({AsOfDate}, DimSnapshotDate[full_date])) RETURN IF(NOT ISBLANK(AsOfDate) && NOT ISBLANK(SnapshotKey), DATE(INT(SnapshotKey / 10000), INT(MOD(SnapshotKey, 10000) / 100), MOD(SnapshotKey, 100)))",
+            "formatString": "yyyy-MM-dd"
+          }
+        ]
+      },
+      {
+        "name": "FactService",
+        "columns": [
+          {
+            "name": "appointment_id",
+            "dataType": "string",
+            "sourceColumn": "appointment_id",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "appointment_date_key",
+            "dataType": "int64",
+            "sourceColumn": "appointment_date_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "customer_key",
+            "dataType": "int64",
+            "sourceColumn": "customer_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "vehicle_key",
+            "dataType": "int64",
+            "sourceColumn": "vehicle_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "dealership_key",
+            "dataType": "int64",
+            "sourceColumn": "dealership_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "service_advisor_key",
+            "dataType": "int64",
+            "sourceColumn": "service_advisor_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "technician_key",
+            "dataType": "int64",
+            "sourceColumn": "technician_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "service_key",
+            "dataType": "int64",
+            "sourceColumn": "service_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "service_order_id",
+            "dataType": "string",
+            "sourceColumn": "service_order_id",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "appointment_status",
+            "dataType": "string",
+            "sourceColumn": "appointment_status",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "appointment_count",
+            "dataType": "int64",
+            "sourceColumn": "appointment_count",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "completed_appointment_count",
+            "dataType": "int64",
+            "sourceColumn": "completed_appointment_count",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "cancellation_count",
+            "dataType": "int64",
+            "sourceColumn": "cancellation_count",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "no_show_count",
+            "dataType": "int64",
+            "sourceColumn": "no_show_count",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "completion_eligible_count",
+            "dataType": "int64",
+            "sourceColumn": "completion_eligible_count",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "repair_order_quantity",
+            "dataType": "int64",
+            "sourceColumn": "repair_order_quantity",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "payer_type",
+            "dataType": "string",
+            "sourceColumn": "payer_type",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "opened_at",
+            "dataType": "dateTime",
+            "sourceColumn": "opened_at",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "promised_at",
+            "dataType": "dateTime",
+            "sourceColumn": "promised_at",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "completed_at",
+            "dataType": "dateTime",
+            "sourceColumn": "completed_at",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "opened_date_key",
+            "dataType": "int64",
+            "sourceColumn": "opened_date_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "promised_date_key",
+            "dataType": "int64",
+            "sourceColumn": "promised_date_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "completed_date_key",
+            "dataType": "int64",
+            "sourceColumn": "completed_date_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "completed_on_time",
+            "dataType": "boolean",
+            "sourceColumn": "completed_on_time",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "turnaround_hours",
+            "dataType": "decimal",
+            "sourceColumn": "turnaround_hours",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "labor_revenue",
+            "dataType": "decimal",
+            "sourceColumn": "labor_revenue",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "parts_revenue",
+            "dataType": "decimal",
+            "sourceColumn": "parts_revenue",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "discount_amount",
+            "dataType": "decimal",
+            "sourceColumn": "discount_amount",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "service_revenue",
+            "dataType": "decimal",
+            "sourceColumn": "service_revenue",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "service_cost",
+            "dataType": "decimal",
+            "sourceColumn": "service_cost",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "service_profit",
+            "dataType": "decimal",
+            "sourceColumn": "service_profit",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "service_cost_available",
+            "dataType": "boolean",
+            "sourceColumn": "service_cost_available",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "order_status",
+            "dataType": "string",
+            "sourceColumn": "order_status",
+            "summarizeBy": "none",
+            "isHidden": true
+          }
+        ],
+        "partitions": [
+          {
+            "name": "FactService",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = if UseLocalSnapshot then Table.FromRecords(Json.Document(File.Contents(SnapshotFolder & \"/FactService.json\")))",
+                "        else Value.NativeQuery(PostgreSQL.Database(Server, Database, [CreateNavigationProperties=false]), \"SELECT a.appointment_id,a.appointment_date_key,a.customer_key,a.vehicle_key,\n a.dealership_key,a.service_advisor_key,a.technician_key,a.service_key,a.service_order_id,\n a.appointment_status,a.appointment_count,a.completed_appointment_count,a.cancellation_count,\n a.no_show_count,a.completion_eligible_count,a.repair_order_quantity,a.payer_type,\n a.opened_at,a.promised_at,a.completed_at,\n to_char(a.opened_at::date,'YYYYMMDD')::integer opened_date_key,\n to_char(a.promised_at::date,'YYYYMMDD')::integer promised_date_key,\n to_char(a.completed_at::date,'YYYYMMDD')::integer completed_date_key,\n a.completed_on_time,a.turnaround_hours,a.labor_revenue,a.parts_revenue,a.discount_amount,\n a.service_revenue,a.service_cost,a.service_profit,a.service_cost_available,ro.order_status\n FROM analytics.vw_service_appointment_detail a\n LEFT JOIN analytics.fact_service ro ON ro.service_fact_key=a.service_fact_key\", null, [EnableFolding=true]),",
+                "    Typed = Table.TransformColumnTypes(Source, {{\"appointment_id\", type text}, {\"appointment_date_key\", Int64.Type}, {\"customer_key\", Int64.Type}, {\"vehicle_key\", Int64.Type}, {\"dealership_key\", Int64.Type}, {\"service_advisor_key\", Int64.Type}, {\"technician_key\", Int64.Type}, {\"service_key\", Int64.Type}, {\"service_order_id\", type text}, {\"appointment_status\", type text}, {\"appointment_count\", Int64.Type}, {\"completed_appointment_count\", Int64.Type}, {\"cancellation_count\", Int64.Type}, {\"no_show_count\", Int64.Type}, {\"completion_eligible_count\", Int64.Type}, {\"repair_order_quantity\", Int64.Type}, {\"payer_type\", type text}, {\"opened_at\", type datetime}, {\"promised_at\", type datetime}, {\"completed_at\", type datetime}, {\"opened_date_key\", Int64.Type}, {\"promised_date_key\", Int64.Type}, {\"completed_date_key\", Int64.Type}, {\"completed_on_time\", type logical}, {\"turnaround_hours\", Currency.Type}, {\"labor_revenue\", Currency.Type}, {\"parts_revenue\", Currency.Type}, {\"discount_amount\", Currency.Type}, {\"service_revenue\", Currency.Type}, {\"service_cost\", Currency.Type}, {\"service_profit\", Currency.Type}, {\"service_cost_available\", type logical}, {\"order_status\", type text}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Service Revenue",
+            "expression": "COALESCE(CALCULATE(SUM(FactService[service_revenue]),\n            USERELATIONSHIP(DimDate[date_key], FactService[completed_date_key]),\n            KEEPFILTERS(FactService[order_status] = \"Completed\")), 0)",
+            "formatString": "#,0.00",
+            "isHidden": false
+          },
+          {
+            "name": "Service Orders",
+            "expression": "COALESCE(CALCULATE(DISTINCTCOUNTNOBLANK(FactService[service_order_id]),\n            USERELATIONSHIP(DimDate[date_key], FactService[completed_date_key]),\n            KEEPFILTERS(FactService[order_status] = \"Completed\")), 0)",
+            "formatString": "#,0",
+            "isHidden": false
+          },
+          {
+            "name": "Average Repair Order",
+            "expression": "DIVIDE([Service Revenue], [Service Orders])",
+            "formatString": "#,0.00",
+            "isHidden": false
+          },
+          {
+            "name": "Completion Rate",
+            "expression": "DIVIDE(SUM(FactService[completed_appointment_count]),\n               SUM(FactService[completion_eligible_count]))",
+            "formatString": "0.00%",
+            "isHidden": false
+          }
+        ]
+      },
+      {
+        "name": "DimSalesperson",
+        "columns": [
+          {
+            "name": "employee_key",
+            "dataType": "int64",
+            "sourceColumn": "employee_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "employee_id",
+            "dataType": "string",
+            "sourceColumn": "employee_id",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "employee_name",
+            "dataType": "string",
+            "sourceColumn": "employee_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "role",
+            "dataType": "string",
+            "sourceColumn": "role",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "employment_status",
+            "dataType": "string",
+            "sourceColumn": "employment_status",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "hire_date",
+            "dataType": "dateTime",
+            "sourceColumn": "hire_date",
+            "summarizeBy": "none",
+            "formatString": "yyyy-MM-dd",
+            "annotations": [
+              {
+                "name": "UnderlyingDateTimeDataType",
+                "value": "Date"
+              }
+            ]
+          },
+          {
+            "name": "effective_from",
+            "dataType": "dateTime",
+            "sourceColumn": "effective_from",
+            "summarizeBy": "none",
+            "formatString": "yyyy-MM-dd",
+            "annotations": [
+              {
+                "name": "UnderlyingDateTimeDataType",
+                "value": "Date"
+              }
+            ]
+          },
+          {
+            "name": "effective_to",
+            "dataType": "dateTime",
+            "sourceColumn": "effective_to",
+            "summarizeBy": "none",
+            "formatString": "yyyy-MM-dd",
+            "annotations": [
+              {
+                "name": "UnderlyingDateTimeDataType",
+                "value": "Date"
+              }
+            ]
+          },
+          {
+            "name": "is_current",
+            "dataType": "boolean",
+            "sourceColumn": "is_current",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "DimSalesperson",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = if UseLocalSnapshot then Table.FromRecords(Json.Document(File.Contents(SnapshotFolder & \"/DimSalesperson.json\")))",
+                "        else Value.NativeQuery(PostgreSQL.Database(Server, Database, [CreateNavigationProperties=false]), \"SELECT employee_key,employee_id,first_name || ' ' || last_name AS employee_name,role,employment_status,hire_date,effective_from,effective_to,is_current FROM analytics.dim_employee WHERE role='Sales Consultant'\", null, [EnableFolding=true]),",
+                "    Typed = Table.TransformColumnTypes(Source, {{\"employee_key\", Int64.Type}, {\"employee_id\", type text}, {\"employee_name\", type text}, {\"role\", type text}, {\"employment_status\", type text}, {\"hire_date\", type date}, {\"effective_from\", type date}, {\"effective_to\", type date}, {\"is_current\", type logical}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "DimServiceAdvisor",
+        "columns": [
+          {
+            "name": "employee_key",
+            "dataType": "int64",
+            "sourceColumn": "employee_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "employee_id",
+            "dataType": "string",
+            "sourceColumn": "employee_id",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "employee_name",
+            "dataType": "string",
+            "sourceColumn": "employee_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "role",
+            "dataType": "string",
+            "sourceColumn": "role",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "employment_status",
+            "dataType": "string",
+            "sourceColumn": "employment_status",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "hire_date",
+            "dataType": "dateTime",
+            "sourceColumn": "hire_date",
+            "summarizeBy": "none",
+            "formatString": "yyyy-MM-dd",
+            "annotations": [
+              {
+                "name": "UnderlyingDateTimeDataType",
+                "value": "Date"
+              }
+            ]
+          },
+          {
+            "name": "effective_from",
+            "dataType": "dateTime",
+            "sourceColumn": "effective_from",
+            "summarizeBy": "none",
+            "formatString": "yyyy-MM-dd",
+            "annotations": [
+              {
+                "name": "UnderlyingDateTimeDataType",
+                "value": "Date"
+              }
+            ]
+          },
+          {
+            "name": "effective_to",
+            "dataType": "dateTime",
+            "sourceColumn": "effective_to",
+            "summarizeBy": "none",
+            "formatString": "yyyy-MM-dd",
+            "annotations": [
+              {
+                "name": "UnderlyingDateTimeDataType",
+                "value": "Date"
+              }
+            ]
+          },
+          {
+            "name": "is_current",
+            "dataType": "boolean",
+            "sourceColumn": "is_current",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "DimServiceAdvisor",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = if UseLocalSnapshot then Table.FromRecords(Json.Document(File.Contents(SnapshotFolder & \"/DimServiceAdvisor.json\")))",
+                "        else Value.NativeQuery(PostgreSQL.Database(Server, Database, [CreateNavigationProperties=false]), \"SELECT employee_key,employee_id,first_name || ' ' || last_name AS employee_name,role,employment_status,hire_date,effective_from,effective_to,is_current FROM analytics.dim_employee WHERE role='Service Advisor'\", null, [EnableFolding=true]),",
+                "    Typed = Table.TransformColumnTypes(Source, {{\"employee_key\", Int64.Type}, {\"employee_id\", type text}, {\"employee_name\", type text}, {\"role\", type text}, {\"employment_status\", type text}, {\"hire_date\", type date}, {\"effective_from\", type date}, {\"effective_to\", type date}, {\"is_current\", type logical}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "DimTechnician",
+        "columns": [
+          {
+            "name": "employee_key",
+            "dataType": "int64",
+            "sourceColumn": "employee_key",
+            "summarizeBy": "none",
+            "isHidden": true
+          },
+          {
+            "name": "employee_id",
+            "dataType": "string",
+            "sourceColumn": "employee_id",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "employee_name",
+            "dataType": "string",
+            "sourceColumn": "employee_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "role",
+            "dataType": "string",
+            "sourceColumn": "role",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "employment_status",
+            "dataType": "string",
+            "sourceColumn": "employment_status",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "hire_date",
+            "dataType": "dateTime",
+            "sourceColumn": "hire_date",
+            "summarizeBy": "none",
+            "formatString": "yyyy-MM-dd",
+            "annotations": [
+              {
+                "name": "UnderlyingDateTimeDataType",
+                "value": "Date"
+              }
+            ]
+          },
+          {
+            "name": "effective_from",
+            "dataType": "dateTime",
+            "sourceColumn": "effective_from",
+            "summarizeBy": "none",
+            "formatString": "yyyy-MM-dd",
+            "annotations": [
+              {
+                "name": "UnderlyingDateTimeDataType",
+                "value": "Date"
+              }
+            ]
+          },
+          {
+            "name": "effective_to",
+            "dataType": "dateTime",
+            "sourceColumn": "effective_to",
+            "summarizeBy": "none",
+            "formatString": "yyyy-MM-dd",
+            "annotations": [
+              {
+                "name": "UnderlyingDateTimeDataType",
+                "value": "Date"
+              }
+            ]
+          },
+          {
+            "name": "is_current",
+            "dataType": "boolean",
+            "sourceColumn": "is_current",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "DimTechnician",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = if UseLocalSnapshot then Table.FromRecords(Json.Document(File.Contents(SnapshotFolder & \"/DimTechnician.json\")))",
+                "        else Value.NativeQuery(PostgreSQL.Database(Server, Database, [CreateNavigationProperties=false]), \"SELECT employee_key,employee_id,first_name || ' ' || last_name AS employee_name,role,employment_status,hire_date,effective_from,effective_to,is_current FROM analytics.dim_employee WHERE role='Service Technician'\", null, [EnableFolding=true]),",
+                "    Typed = Table.TransformColumnTypes(Source, {{\"employee_key\", Int64.Type}, {\"employee_id\", type text}, {\"employee_name\", type text}, {\"role\", type text}, {\"employment_status\", type text}, {\"hire_date\", type date}, {\"effective_from\", type date}, {\"effective_to\", type date}, {\"is_current\", type logical}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "name": "DimDate_FactSales_sale_date_key",
+        "fromTable": "FactSales",
+        "fromColumn": "sale_date_key",
+        "toTable": "DimDate",
+        "toColumn": "date_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "isActive": true
+      },
+      {
+        "name": "DimCustomer_FactSales_customer_key",
+        "fromTable": "FactSales",
+        "fromColumn": "customer_key",
+        "toTable": "DimCustomer",
+        "toColumn": "customer_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "isActive": true
+      },
+      {
+        "name": "DimVehicle_FactSales_vehicle_key",
+        "fromTable": "FactSales",
+        "fromColumn": "vehicle_key",
+        "toTable": "DimVehicle",
+        "toColumn": "vehicle_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "isActive": true
+      },
+      {
+        "name": "DimDealership_FactSales_dealership_key",
+        "fromTable": "FactSales",
+        "fromColumn": "dealership_key",
+        "toTable": "DimDealership",
+        "toColumn": "dealership_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "isActive": true
+      },
+      {
+        "name": "DimSalesperson_FactSales_salesperson_key",
+        "fromTable": "FactSales",
+        "fromColumn": "salesperson_key",
+        "toTable": "DimSalesperson",
+        "toColumn": "employee_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "isActive": true
+      },
+      {
+        "name": "DimSnapshotDate_FactInventory_snapshot_date_key",
+        "fromTable": "FactInventory",
+        "fromColumn": "snapshot_date_key",
+        "toTable": "DimSnapshotDate",
+        "toColumn": "date_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "isActive": true
+      },
+      {
+        "name": "DimSnapshotDate_FactInventory_acquired_date_key",
+        "fromTable": "FactInventory",
+        "fromColumn": "acquired_date_key",
+        "toTable": "DimSnapshotDate",
+        "toColumn": "date_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "isActive": false
+      },
+      {
+        "name": "DimVehicle_FactInventory_vehicle_key",
+        "fromTable": "FactInventory",
+        "fromColumn": "vehicle_key",
+        "toTable": "DimVehicle",
+        "toColumn": "vehicle_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "isActive": true
+      },
+      {
+        "name": "DimDealership_FactInventory_dealership_key",
+        "fromTable": "FactInventory",
+        "fromColumn": "dealership_key",
+        "toTable": "DimDealership",
+        "toColumn": "dealership_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "isActive": true
+      },
+      {
+        "name": "DimDate_FactService_appointment_date_key",
+        "fromTable": "FactService",
+        "fromColumn": "appointment_date_key",
+        "toTable": "DimDate",
+        "toColumn": "date_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "isActive": true
+      },
+      {
+        "name": "DimDate_FactService_completed_date_key",
+        "fromTable": "FactService",
+        "fromColumn": "completed_date_key",
+        "toTable": "DimDate",
+        "toColumn": "date_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "isActive": false
+      },
+      {
+        "name": "DimDate_FactService_opened_date_key",
+        "fromTable": "FactService",
+        "fromColumn": "opened_date_key",
+        "toTable": "DimDate",
+        "toColumn": "date_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "isActive": false
+      },
+      {
+        "name": "DimDate_FactService_promised_date_key",
+        "fromTable": "FactService",
+        "fromColumn": "promised_date_key",
+        "toTable": "DimDate",
+        "toColumn": "date_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "isActive": false
+      },
+      {
+        "name": "DimCustomer_FactService_customer_key",
+        "fromTable": "FactService",
+        "fromColumn": "customer_key",
+        "toTable": "DimCustomer",
+        "toColumn": "customer_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "isActive": true
+      },
+      {
+        "name": "DimVehicle_FactService_vehicle_key",
+        "fromTable": "FactService",
+        "fromColumn": "vehicle_key",
+        "toTable": "DimVehicle",
+        "toColumn": "vehicle_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "isActive": true
+      },
+      {
+        "name": "DimDealership_FactService_dealership_key",
+        "fromTable": "FactService",
+        "fromColumn": "dealership_key",
+        "toTable": "DimDealership",
+        "toColumn": "dealership_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "isActive": true
+      },
+      {
+        "name": "DimServiceAdvisor_FactService_service_advisor_key",
+        "fromTable": "FactService",
+        "fromColumn": "service_advisor_key",
+        "toTable": "DimServiceAdvisor",
+        "toColumn": "employee_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "isActive": true
+      },
+      {
+        "name": "DimTechnician_FactService_technician_key",
+        "fromTable": "FactService",
+        "fromColumn": "technician_key",
+        "toTable": "DimTechnician",
+        "toColumn": "employee_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "isActive": true
+      },
+      {
+        "name": "DimService_FactService_service_key",
+        "fromTable": "FactService",
+        "fromColumn": "service_key",
+        "toTable": "DimService",
+        "toColumn": "service_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "isActive": true
+      },
+      {
+        "name": "DimDate_DimCustomer_customer_since_date",
+        "fromTable": "DimCustomer",
+        "fromColumn": "customer_since_date",
+        "toTable": "DimDate",
+        "toColumn": "full_date",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "isActive": false
+      }
+    ]
+  }
+}

@@ -1,0 +1,276 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/1.4.0/schema.json",
+  "name": "executive_overview",
+  "displayName": "Executive Overview",
+  "displayOption": "FitToPage",
+  "width": 1280,
+  "height": 920,
+  "objects": {
+    "background": [
+      {
+        "properties": {
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#F3F6FA'"
+                  }
+                }
+              }
+            }
+          },
+          "transparency": {
+            "expr": {
+              "Literal": {
+                "Value": "0D"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "visualInteractions": [
+    {
+      "source": "slicer_date",
+      "target": "kpi_0",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "kpi_1",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "kpi_2",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "kpi_3",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "kpi_4",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "kpi_5",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "sales_trend",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "service_trend",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "brand_sales",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "dealer_sales",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "inventory_age",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "snapshot_label",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "kpi_0",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "kpi_1",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "kpi_2",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "kpi_3",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "kpi_4",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "kpi_5",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "sales_trend",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "service_trend",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "brand_sales",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "dealer_sales",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "inventory_age",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "snapshot_label",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "kpi_0",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "kpi_1",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "kpi_2",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "kpi_3",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "kpi_4",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "kpi_5",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "sales_trend",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "service_trend",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "brand_sales",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "dealer_sales",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "inventory_age",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "snapshot_label",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "kpi_0",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "kpi_1",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "kpi_2",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "kpi_3",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "kpi_4",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "kpi_5",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "sales_trend",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "service_trend",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "brand_sales",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "dealer_sales",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "inventory_age",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "snapshot_label",
+      "type": "DataFilter"
+    }
+  ]
+}

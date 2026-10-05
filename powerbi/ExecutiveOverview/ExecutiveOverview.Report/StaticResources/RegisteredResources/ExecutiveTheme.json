@@ -1,0 +1,23 @@
+{
+  "name": "Executive Overview",
+  "dataColors": [
+    "#0C7B83",
+    "#294C72",
+    "#D69934",
+    "#748DA6",
+    "#5E9971"
+  ],
+  "background": "#F3F6FA",
+  "foreground": "#152A42",
+  "tableAccent": "#0C7B83",
+  "textClasses": {
+    "title": {
+      "fontFace": "Segoe UI Semibold",
+      "fontSize": 12
+    },
+    "label": {
+      "fontFace": "Segoe UI",
+      "fontSize": 10
+    }
+  }
+}

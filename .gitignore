@@ -40,6 +40,8 @@ airflow/dags/__pycache__/
 # Power BI local artifacts
 *.pbix
 *.pbit
+powerbi/**/.pbi/
+powerbi/**/local-data/
 
 # IDE and OS files
 .idea/
