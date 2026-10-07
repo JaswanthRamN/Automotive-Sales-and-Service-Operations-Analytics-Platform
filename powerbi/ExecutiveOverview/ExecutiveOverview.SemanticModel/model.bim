@@ -337,6 +337,28 @@
             "expression": "VAR AsOfDate = MAX(DimDate[full_date])\n        RETURN IF(NOT ISBLANK(AsOfDate),\n            CALCULATE([Revenue] + [Service Revenue],\n                FILTER(ALL(DimDate), DimDate[full_date] <= AsOfDate)))",
             "formatString": "#,0.00",
             "isHidden": false
+          },
+          {
+            "name": "Customers with Sales",
+            "expression": "COALESCE(SUMX(VALUES(DimCustomer[customer_id]), IF(CALCULATE(DISTINCTCOUNTNOBLANK(FactSales[sale_id]), KEEPFILTERS(FactSales[sale_status] = \"Completed\")) > 0, 1, 0)), 0)",
+            "formatString": "#,0",
+            "isHidden": true
+          },
+          {
+            "name": "Customers with Service",
+            "expression": "COALESCE(SUMX(VALUES(DimCustomer[customer_id]), IF(CALCULATE([Service Orders]) > 0, 1, 0)), 0)",
+            "formatString": "#,0",
+            "isHidden": true
+          },
+          {
+            "name": "Sales + Service Customers",
+            "expression": "COALESCE(SUMX(VALUES(DimCustomer[customer_id]), IF(CALCULATE(DISTINCTCOUNTNOBLANK(FactSales[sale_id]), KEEPFILTERS(FactSales[sale_status] = \"Completed\")) > 0 && CALCULATE([Service Orders]) > 0, 1, 0)), 0)",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Service Frequency",
+            "expression": "DIVIDE([Service Orders], [Customers with Service])",
+            "formatString": "#,0.00"
           }
         ]
       },
@@ -869,6 +891,31 @@
             "name": "Executive Snapshot Date",
             "expression": "VAR AsOfDate = MAX(DimDate[full_date]) VAR SnapshotKey = CALCULATE([Inventory Snapshot Key], REMOVEFILTERS(DimSnapshotDate), TREATAS({AsOfDate}, DimSnapshotDate[full_date])) RETURN IF(NOT ISBLANK(AsOfDate) && NOT ISBLANK(SnapshotKey), DATE(INT(SnapshotKey / 10000), INT(MOD(SnapshotKey, 10000) / 100), MOD(SnapshotKey, 100)))",
             "formatString": "yyyy-MM-dd"
+          },
+          {
+            "name": "As-Of Inventory Value",
+            "expression": "VAR AsOfDate = MAX(DimDate[full_date]) RETURN IF(NOT ISBLANK(AsOfDate), CALCULATE([Inventory Value], REMOVEFILTERS(DimSnapshotDate), TREATAS({AsOfDate}, DimSnapshotDate[full_date])))",
+            "formatString": "#,0.00"
+          },
+          {
+            "name": "As-Of Inventory Units",
+            "expression": "VAR AsOfDate = MAX(DimDate[full_date]) RETURN IF(NOT ISBLANK(AsOfDate), CALCULATE([Inventory Units], REMOVEFILTERS(DimSnapshotDate), TREATAS({AsOfDate}, DimSnapshotDate[full_date])))",
+            "formatString": "#,0"
+          },
+          {
+            "name": "As-Of Average Days in Inventory",
+            "expression": "VAR AsOfDate = MAX(DimDate[full_date]) RETURN IF(NOT ISBLANK(AsOfDate), CALCULATE([Average Days in Inventory], REMOVEFILTERS(DimSnapshotDate), TREATAS({AsOfDate}, DimSnapshotDate[full_date])))",
+            "formatString": "#,0.00"
+          },
+          {
+            "name": "As-Of Slow-Moving Vehicles",
+            "expression": "VAR AsOfDate = MAX(DimDate[full_date]) RETURN IF(NOT ISBLANK(AsOfDate), CALCULATE([Slow-Moving Vehicles], REMOVEFILTERS(DimSnapshotDate), TREATAS({AsOfDate}, DimSnapshotDate[full_date])))",
+            "formatString": "#,0"
+          },
+          {
+            "name": "As-Of Snapshot Date",
+            "expression": "VAR AsOfDate = MAX(DimDate[full_date]) VAR SnapshotKey = CALCULATE([Inventory Snapshot Key], REMOVEFILTERS(DimSnapshotDate), TREATAS({AsOfDate}, DimSnapshotDate[full_date])) RETURN IF(NOT ISBLANK(AsOfDate) && NOT ISBLANK(SnapshotKey), DATE(INT(SnapshotKey / 10000), INT(MOD(SnapshotKey, 10000) / 100), MOD(SnapshotKey, 100)))",
+            "formatString": "yyyy-MM-dd"
           }
         ]
       },
@@ -1080,14 +1127,14 @@
           },
           {
             "name": "service_cost",
-            "dataType": "decimal",
+            "dataType": "string",
             "sourceColumn": "service_cost",
             "summarizeBy": "none",
             "isHidden": true
           },
           {
             "name": "service_profit",
-            "dataType": "decimal",
+            "dataType": "string",
             "sourceColumn": "service_profit",
             "summarizeBy": "none",
             "isHidden": true
@@ -1117,7 +1164,7 @@
                 "let",
                 "    Source = if UseLocalSnapshot then Table.FromRecords(Json.Document(File.Contents(SnapshotFolder & \"/FactService.json\")))",
                 "        else Value.NativeQuery(PostgreSQL.Database(Server, Database, [CreateNavigationProperties=false]), \"SELECT a.appointment_id,a.appointment_date_key,a.customer_key,a.vehicle_key,\n a.dealership_key,a.service_advisor_key,a.technician_key,a.service_key,a.service_order_id,\n a.appointment_status,a.appointment_count,a.completed_appointment_count,a.cancellation_count,\n a.no_show_count,a.completion_eligible_count,a.repair_order_quantity,a.payer_type,\n a.opened_at,a.promised_at,a.completed_at,\n to_char(a.opened_at::date,'YYYYMMDD')::integer opened_date_key,\n to_char(a.promised_at::date,'YYYYMMDD')::integer promised_date_key,\n to_char(a.completed_at::date,'YYYYMMDD')::integer completed_date_key,\n a.completed_on_time,a.turnaround_hours,a.labor_revenue,a.parts_revenue,a.discount_amount,\n a.service_revenue,a.service_cost,a.service_profit,a.service_cost_available,ro.order_status\n FROM analytics.vw_service_appointment_detail a\n LEFT JOIN analytics.fact_service ro ON ro.service_fact_key=a.service_fact_key\", null, [EnableFolding=true]),",
-                "    Typed = Table.TransformColumnTypes(Source, {{\"appointment_id\", type text}, {\"appointment_date_key\", Int64.Type}, {\"customer_key\", Int64.Type}, {\"vehicle_key\", Int64.Type}, {\"dealership_key\", Int64.Type}, {\"service_advisor_key\", Int64.Type}, {\"technician_key\", Int64.Type}, {\"service_key\", Int64.Type}, {\"service_order_id\", type text}, {\"appointment_status\", type text}, {\"appointment_count\", Int64.Type}, {\"completed_appointment_count\", Int64.Type}, {\"cancellation_count\", Int64.Type}, {\"no_show_count\", Int64.Type}, {\"completion_eligible_count\", Int64.Type}, {\"repair_order_quantity\", Int64.Type}, {\"payer_type\", type text}, {\"opened_at\", type datetime}, {\"promised_at\", type datetime}, {\"completed_at\", type datetime}, {\"opened_date_key\", Int64.Type}, {\"promised_date_key\", Int64.Type}, {\"completed_date_key\", Int64.Type}, {\"completed_on_time\", type logical}, {\"turnaround_hours\", Currency.Type}, {\"labor_revenue\", Currency.Type}, {\"parts_revenue\", Currency.Type}, {\"discount_amount\", Currency.Type}, {\"service_revenue\", Currency.Type}, {\"service_cost\", Currency.Type}, {\"service_profit\", Currency.Type}, {\"service_cost_available\", type logical}, {\"order_status\", type text}}, \"en-US\")",
+                "    Typed = Table.TransformColumnTypes(Source, {{\"appointment_id\", type text}, {\"appointment_date_key\", Int64.Type}, {\"customer_key\", Int64.Type}, {\"vehicle_key\", Int64.Type}, {\"dealership_key\", Int64.Type}, {\"service_advisor_key\", Int64.Type}, {\"technician_key\", Int64.Type}, {\"service_key\", Int64.Type}, {\"service_order_id\", type text}, {\"appointment_status\", type text}, {\"appointment_count\", Int64.Type}, {\"completed_appointment_count\", Int64.Type}, {\"cancellation_count\", Int64.Type}, {\"no_show_count\", Int64.Type}, {\"completion_eligible_count\", Int64.Type}, {\"repair_order_quantity\", Int64.Type}, {\"payer_type\", type text}, {\"opened_at\", type datetime}, {\"promised_at\", type datetime}, {\"completed_at\", type datetime}, {\"opened_date_key\", Int64.Type}, {\"promised_date_key\", Int64.Type}, {\"completed_date_key\", Int64.Type}, {\"completed_on_time\", type logical}, {\"turnaround_hours\", Currency.Type}, {\"labor_revenue\", Currency.Type}, {\"parts_revenue\", Currency.Type}, {\"discount_amount\", Currency.Type}, {\"service_revenue\", Currency.Type}, {\"service_cost\", type text}, {\"service_profit\", type text}, {\"service_cost_available\", type logical}, {\"order_status\", type text}}, \"en-US\")",
                 "in Typed"
               ]
             }

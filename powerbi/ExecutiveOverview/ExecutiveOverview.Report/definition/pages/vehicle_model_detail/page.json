@@ -1,0 +1,85 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/1.4.0/schema.json",
+  "name": "vehicle_model_detail",
+  "displayName": "Vehicle / Model Detail",
+  "displayOption": "FitToPage",
+  "width": 1280,
+  "height": 920,
+  "objects": {
+    "background": [
+      {
+        "properties": {
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#F3F6FA'"
+                  }
+                }
+              }
+            }
+          },
+          "transparency": {
+            "expr": {
+              "Literal": {
+                "Value": "0D"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "type": "Drillthrough",
+  "visibility": "HiddenInViewMode",
+  "pageBinding": {
+    "name": "vehicle_model_detail",
+    "type": "Drillthrough",
+    "parameters": [
+      {
+        "name": "brand",
+        "boundFilter": "DimVehicle.brand",
+        "fieldExpr": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "DimVehicle"
+              }
+            },
+            "Property": "brand"
+          }
+        }
+      },
+      {
+        "name": "model",
+        "boundFilter": "DimVehicle.model",
+        "fieldExpr": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "DimVehicle"
+              }
+            },
+            "Property": "model"
+          }
+        }
+      },
+      {
+        "name": "vehicle_type",
+        "boundFilter": "DimVehicle.vehicle_type",
+        "fieldExpr": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "DimVehicle"
+              }
+            },
+            "Property": "vehicle_type"
+          }
+        }
+      }
+    ],
+    "acceptsFilterContext": "Default"
+  }
+}

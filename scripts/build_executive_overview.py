@@ -22,6 +22,9 @@ PROJECT = ROOT / 'powerbi/ExecutiveOverview'
 BASE = 'https://developer.microsoft.com/json-schemas/fabric/item/report/'
 DEFINITION = BASE + 'definition/'
 PAGE = 'executive_overview'
+PAGE_SALES_INVENTORY = 'sales_inventory'
+PAGE_SERVICE_CUSTOMER = 'service_customer'
+PAGE_VEHICLE_DETAIL = 'vehicle_model_detail'
 
 CALENDAR = """WITH bounds AS (
  SELECT date_trunc('year',min(d))::date lo,
@@ -75,6 +78,34 @@ def serialize(value):
     raise TypeError(type(value).__name__)
 
 
+def infer_type_code(value):
+    if isinstance(value, bool):
+        return 16
+    if isinstance(value, int):
+        return 23
+    if isinstance(value, float):
+        return 1700
+    if isinstance(value, str):
+        if re.fullmatch(r'\d{4}-\d{2}-\d{2}', value):
+            return 1082
+        if re.fullmatch(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*', value):
+            return 1114
+    return 25
+
+
+def metadata_from_snapshot(project):
+    metadata={}
+    for table in SOURCES:
+        path=project/'local-data'/f'{table}.json'
+        if not path.exists():
+            raise FileNotFoundError(f'Missing snapshot file: {path}')
+        rows=json.loads(path.read_text(encoding='utf-8'))
+        if not rows:
+            raise RuntimeError(f'Empty snapshot source: {table}')
+        metadata[table]=[(column,infer_type_code(rows[0].get(column))) for column in rows[0]]
+    return metadata
+
+
 def literal(value):
     if isinstance(value, bool):
         value = str(value).lower()
@@ -122,7 +153,6 @@ def visual(name, visual_type, title, box, roles=None, objects=None):
 def build_report(project):
     report = project/'ExecutiveOverview.Report'
     definition = report/'definition'
-    page_path = definition/'pages'/PAGE
     write_json(project/'ExecutiveOverview.pbip', {
         '$schema':'https://developer.microsoft.com/json-schemas/fabric/pbip/pbipProperties/1.0.0/schema.json',
         'version':'1.0', 'artifacts':[{'report':{'path':'ExecutiveOverview.Report'}}],
@@ -132,7 +162,9 @@ def build_report(project):
     write_json(report/'.platform', {'$schema':'https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json',
         'version':'2.0','metadata':{'type':'Report','displayName':'ExecutiveOverview'},
         'config':{'version':'2.0','logicalId':'d2737a23-71ed-4453-b461-c332146677c4'}})
-    write_json(definition/'pages/pages.json', {'$schema':DEFINITION+'pagesMetadata/1.0.0/schema.json','pageOrder':[PAGE],'activePageName':PAGE})
+    write_json(definition/'pages/pages.json', {'$schema':DEFINITION+'pagesMetadata/1.0.0/schema.json',
+        'pageOrder':[PAGE,PAGE_SALES_INVENTORY,PAGE_SERVICE_CUSTOMER,PAGE_VEHICLE_DETAIL],
+        'activePageName':PAGE_SERVICE_CUSTOMER})
     write_json(definition/'report.json', {'$schema':DEFINITION+'report/2.0.0/schema.json',
         'themeCollection':{'customTheme':{'name':'ExecutiveTheme','reportVersionAtImport':'5.55','type':'RegisteredResources'}},
         'resourcePackages':[{'name':'RegisteredResources','type':'RegisteredResources','items':[
@@ -141,32 +173,38 @@ def build_report(project):
         'name':'Executive Overview','dataColors':['#0C7B83','#294C72','#D69934','#748DA6','#5E9971'],
         'background':'#F3F6FA','foreground':'#152A42','tableAccent':'#0C7B83',
         'textClasses':{'title':{'fontFace':'Segoe UI Semibold','fontSize':12},'label':{'fontFace':'Segoe UI','fontSize':10}}})
-    visuals=[]
-    def add(v):
-        v['position']['z']=len(visuals)
-        v['position']['tabOrder']=len(visuals)
-        visuals.append(v)
-    def text_box(name, content, box, size):
+
+    def write_page(page_name, display_name, visuals, slicers=None, page_type=None, visibility=None, page_binding=None):
+        page_path = definition/'pages'/page_name
+        targets=[v['name'] for v in visuals if v['visual']['visualType'] not in ('slicer','textbox')]
+        payload={'$schema':DEFINITION+'page/1.4.0/schema.json',
+            'name':page_name,'displayName':display_name,'displayOption':'FitToPage','width':1280,'height':920,
+            'objects':{'background':formatting(color=color('#F3F6FA'),transparency=literal(0))}}
+        if slicers:
+            payload['visualInteractions']=[{'source':'slicer_'+s[0],'target':target,'type':'DataFilter'} for s in slicers for target in targets]
+        if page_type:
+            payload['type']=page_type
+        if visibility:
+            payload['visibility']=visibility
+        if page_binding:
+            payload['pageBinding']=page_binding
+        write_json(page_path/'page.json', payload)
+        for v in visuals:
+            write_json(page_path/'visuals'/v['name']/'visual.json',v)
+
+    def text_box(visuals, name, content, box, size):
         v=visual(name,'textbox','',box,objects={'general':formatting(paragraphs=[{
             'textRuns':[{'value':content,'textStyle':{'fontFamily':'Segoe UI','fontSize':f'{size}pt','color':'#152A42'}}]}])})
         v['visual']['visualContainerObjects']['title']=formatting(show=literal(False))
         v['visual']['visualContainerObjects']['border']=formatting(show=literal(False))
-        add(v)
-    text_box('header','EXECUTIVE OVERVIEW  |  Automotive Sales & Service',(24,12,1232,48),22)
-    slicers=[('date','Date','DimDate','full_date'),('dealer','Dealership','DimDealership','dealership_name'),
-             ('brand','Brand','DimVehicle','brand'),('type','Vehicle Type','DimVehicle','vehicle_type')]
-    for index,(name,title,table,column) in enumerate(slicers):
-        add(visual('slicer_'+name,'slicer',title,(24+index*312,76,296,86),{'Values':[projection(table,column)]},
-            {'data':formatting(mode=literal('Between' if name=='date' else 'Dropdown')),
-             'selection':formatting(singleSelect=literal(False),selectAllCheckboxEnabled=literal(True))}))
-    cards=[('Revenue','DimCustomer','Revenue'),('Units Sold','FactSales','Units Sold'),
-           ('Gross Profit','FactSales','Gross Profit'),('Gross Margin','FactSales','Gross Margin %'),
-           ('Service Revenue','FactService','Service Revenue'),('Inventory Value · as of date','FactInventory','Executive Inventory Value')]
-    for index,(title,table,measure) in enumerate(cards):
-        add(visual('kpi_'+str(index),'card',title,(24+index*208,182,192,108),{'Values':[projection(table,measure,True)]},
-            {'labels':formatting(fontSize=literal(26),color=color('#0C7B83')),
-             'categoryLabels':formatting(show=literal(False))}))
-    def chart(name, kind, title, box, table, column, measures, sort='Ascending'):
+        add_visual(visuals, v)
+
+    def add_visual(visuals, v):
+        v['position']['z']=len(visuals)
+        v['position']['tabOrder']=len(visuals)
+        visuals.append(v)
+
+    def chart(visuals, name, kind, title, box, table, column, measures, sort='Ascending'):
         v=visual(name,kind,title,box,{'Category':[projection(table,column)],
             'Y':[projection(t,m,True) for t,m in measures]},
             {'categoryAxis':formatting(show=literal(True),fontSize=literal(10)),
@@ -174,28 +212,142 @@ def build_report(project):
              'legend':formatting(show=literal(len(measures)>1)),
              'dataPoint':formatting(defaultColor=color('#0C7B83'))})
         v['visual']['query']['sortDefinition']={'sort':[{'field':field(table,column),'direction':sort}],'isDefaultSort':False}
-        add(v)
-    chart('sales_trend','lineChart','Monthly sales revenue and gross profit',(24,310,608,235),
+        add_visual(visuals, v)
+
+    def table_visual(visuals, name, title, box, columns, measures):
+        values=[projection(t,c,False) for t,c in columns] + [projection(t,m,True) for t,m in measures]
+        add_visual(visuals, visual(name,'tableEx',title,box,{'Values':values},
+            {'grid':formatting(outlineColor=color('#D9E2EC'),textSize=literal(9)),
+             'columnHeaders':formatting(fontColor=color('#152A42'),backColor=color('#EAF0F6'),bold=literal(True)),
+             'values':formatting(fontColor=color('#152A42'))}))
+
+    visuals=[]
+    text_box(visuals,'header','EXECUTIVE OVERVIEW  |  Automotive Sales & Service',(24,12,1232,48),22)
+    slicers=[('date','Date','DimDate','full_date'),('dealer','Dealership','DimDealership','dealership_name'),
+             ('brand','Brand','DimVehicle','brand'),('type','Vehicle Type','DimVehicle','vehicle_type')]
+    for index,(name,title,table,column) in enumerate(slicers):
+        add_visual(visuals, visual('slicer_'+name,'slicer',title,(24+index*312,76,296,86),{'Values':[projection(table,column)]},
+            {'data':formatting(mode=literal('Between' if name=='date' else 'Dropdown')),
+             'selection':formatting(singleSelect=literal(False),selectAllCheckboxEnabled=literal(True))}))
+    cards=[('Revenue','DimCustomer','Revenue'),('Units Sold','FactSales','Units Sold'),
+           ('Gross Profit','FactSales','Gross Profit'),('Gross Margin','FactSales','Gross Margin %'),
+           ('Service Revenue','FactService','Service Revenue'),('Inventory Value · as of date','FactInventory','Executive Inventory Value')]
+    for index,(title,table,measure) in enumerate(cards):
+        add_visual(visuals, visual('kpi_'+str(index),'card',title,(24+index*208,182,192,108),{'Values':[projection(table,measure,True)]},
+            {'labels':formatting(fontSize=literal(26),color=color('#0C7B83')),
+             'categoryLabels':formatting(show=literal(False))}))
+    chart(visuals,'sales_trend','lineChart','Monthly sales revenue and gross profit',(24,310,608,235),
         'DimDate','year_month',[('DimCustomer','Revenue'),('FactSales','Gross Profit')])
-    chart('service_trend','columnChart','Monthly service revenue · completion date',(648,310,608,235),
+    chart(visuals,'service_trend','columnChart','Monthly service revenue · completion date',(648,310,608,235),
         'DimDate','year_month',[('FactService','Service Revenue')])
-    chart('brand_sales','barChart','Sales revenue by brand',(24,565,400,265),
+    chart(visuals,'brand_sales','barChart','Sales revenue by brand',(24,565,400,265),
         'DimVehicle','brand',[('DimCustomer','Revenue')])
-    chart('dealer_sales','barChart','Sales revenue by dealership',(440,565,400,265),
+    chart(visuals,'dealer_sales','barChart','Sales revenue by dealership',(440,565,400,265),
         'DimDealership','dealership_name',[('DimCustomer','Revenue')])
-    chart('inventory_age','columnChart','Inventory aging · units at as-of snapshot',(856,565,400,265),
+    chart(visuals,'inventory_age','columnChart','Inventory aging · units at as-of snapshot',(856,565,400,265),
         'FactInventory','aging_bucket',[('FactInventory','Executive Inventory Units')])
-    add(visual('snapshot_label','card','Inventory snapshot used',(24,848,320,52),
+    add_visual(visuals, visual('snapshot_label','card','Inventory snapshot used',(24,848,320,52),
         {'Values':[projection('FactInventory','Executive Snapshot Date',True)]},
         {'labels':formatting(fontSize=literal(12)), 'categoryLabels':formatting(show=literal(False))}))
-    text_box('footer','Date filters sales / service periods; stock uses latest snapshot on or before period end. Amounts in source currency.',(360,848,896,52),10)
-    targets=[v['name'] for v in visuals if v['visual']['visualType'] not in ('slicer','textbox')]
-    write_json(page_path/'page.json', {'$schema':DEFINITION+'page/1.4.0/schema.json',
-        'name':PAGE,'displayName':'Executive Overview','displayOption':'FitToPage','width':1280,'height':920,
-        'objects':{'background':formatting(color=color('#F3F6FA'),transparency=literal(0))},
-        'visualInteractions':[{'source':'slicer_'+s[0],'target':target,'type':'DataFilter'} for s in slicers for target in targets]})
-    for v in visuals:
-        write_json(page_path/'visuals'/v['name']/'visual.json',v)
+    text_box(visuals,'footer','Date filters sales / service periods; stock uses latest snapshot on or before period end. Amounts in source currency.',(360,848,896,52),10)
+    write_page(PAGE,'Executive Overview',visuals,slicers)
+
+    visuals=[]
+    text_box(visuals,'header','PAGE 2  |  SALES & INVENTORY PERFORMANCE',(24,12,1232,46),21)
+    for index,(name,title,table,column) in enumerate(slicers):
+        add_visual(visuals, visual('slicer_'+name,'slicer',title,(24+index*312,70,296,78),{'Values':[projection(table,column)]},
+            {'data':formatting(mode=literal('Between' if name=='date' else 'Dropdown')),
+             'selection':formatting(singleSelect=literal(False),selectAllCheckboxEnabled=literal(True))}))
+    page2_cards=[('Units Sold','FactSales','Units Sold'),('Revenue','DimCustomer','Revenue'),
+        ('ASP','FactSales','ASP'),('Gross Profit','FactSales','Gross Profit'),
+        ('Gross Margin %','FactSales','Gross Margin %'),('Inventory Units','FactInventory','As-Of Inventory Units'),
+        ('Inventory Value','FactInventory','As-Of Inventory Value'),('Avg Age','FactInventory','As-Of Average Days in Inventory'),
+        ('90+ Day Vehicles','FactInventory','As-Of Slow-Moving Vehicles')]
+    for index,(title,table,measure) in enumerate(page2_cards):
+        row=index//5
+        col=index%5
+        width=238 if row==0 else 294
+        add_visual(visuals, visual('p2_kpi_'+str(index),'card',title,(24+col*(width+12),170+row*102,width,86),
+            {'Values':[projection(table,measure,True)]},
+            {'labels':formatting(fontSize=literal(21),color=color('#0C7B83')),
+             'categoryLabels':formatting(show=literal(False))}))
+    chart(visuals,'monthly_sales','lineChart','Monthly units, revenue and gross profit',(24,385,390,210),
+        'DimDate','year_month',[('FactSales','Units Sold'),('DimCustomer','Revenue'),('FactSales','Gross Profit')])
+    chart(visuals,'salesperson_perf','barChart','Salesperson performance - revenue and margin',(430,385,390,210),
+        'DimSalesperson','employee_name',[('DimCustomer','Revenue'),('FactSales','Gross Margin %')])
+    chart(visuals,'brand_model_perf','barChart','Brand / model performance - drill through to details',(836,385,420,210),
+        'DimVehicle','model',[('DimCustomer','Revenue'),('FactSales','Units Sold'),('FactSales','ASP')])
+    chart(visuals,'inventory_aging','columnChart','Inventory aging - as-of units and value',(24,620,390,210),
+        'FactInventory','aging_bucket',[('FactInventory','As-Of Inventory Units'),('FactInventory','As-Of Inventory Value')])
+    chart(visuals,'inventory_by_model','barChart','Inventory value and average age by model',(430,620,390,210),
+        'DimVehicle','model',[('FactInventory','As-Of Inventory Value'),('FactInventory','As-Of Average Days in Inventory')])
+    table_visual(visuals,'vehicle_model_matrix','Vehicle / model detail source for drill-through',(836,620,420,210),
+        [('DimVehicle','brand'),('DimVehicle','model'),('DimVehicle','vehicle_type')],
+        [('FactSales','Units Sold'),('DimCustomer','Revenue'),('FactSales','Gross Profit'),('FactInventory','As-Of Inventory Units'),('FactInventory','As-Of Slow-Moving Vehicles')])
+    text_box(visuals,'drill_note','Right-click a brand/model visual and drill through to Vehicle / Model Detail for filtered sales and stock detail.',(24,850,1232,46),10)
+    write_page(PAGE_SALES_INVENTORY,'Sales & Inventory',visuals,slicers)
+
+    visuals=[]
+    text_box(visuals,'header','PAGE 3  |  SERVICE & CUSTOMER PERFORMANCE',(24,12,1232,46),21)
+    for index,(name,title,table,column) in enumerate(slicers):
+        add_visual(visuals, visual('slicer_'+name,'slicer',title,(24+index*312,70,296,78),{'Values':[projection(table,column)]},
+            {'data':formatting(mode=literal('Between' if name=='date' else 'Dropdown')),
+             'selection':formatting(singleSelect=literal(False),selectAllCheckboxEnabled=literal(True))}))
+    page3_cards=[('Service Revenue','FactService','Service Revenue'),('Service Orders','FactService','Service Orders'),
+        ('Average Repair Order','FactService','Average Repair Order'),('Completion Rate','FactService','Completion Rate'),
+        ('Customers','DimCustomer','Customers'),('Repeat Customers','DimCustomer','Repeat Customers'),
+        ('Repeat Rate','DimCustomer','Repeat Rate'),('Customer Lifetime Value','DimCustomer','Customer Lifetime Value'),
+        ('Sales + Service Customers','DimCustomer','Sales + Service Customers'),('Service Frequency','DimCustomer','Service Frequency')]
+    for index,(title,table,measure) in enumerate(page3_cards):
+        add_visual(visuals, visual('p3_kpi_'+str(index),'card',title,(24+(index%5)*250,170+(index//5)*98,236,82),
+            {'Values':[projection(table,measure,True)]},
+            {'labels':formatting(fontSize=literal(20),color=color('#0C7B83')),
+             'categoryLabels':formatting(show=literal(False))}))
+    chart(visuals,'service_monthly','lineChart','Monthly service revenue and orders',(24,385,390,210),
+        'DimDate','year_month',[('FactService','Service Revenue'),('FactService','Service Orders')])
+    chart(visuals,'technician_perf','barChart','Technician performance - revenue, orders and completion',(430,385,390,210),
+        'DimTechnician','employee_name',[('FactService','Service Revenue'),('FactService','Service Orders'),('FactService','Completion Rate')])
+    chart(visuals,'service_type_perf','barChart','Service-type performance - revenue, orders and ARO',(836,385,420,210),
+        'DimService','service_type',[('FactService','Service Revenue'),('FactService','Service Orders'),('FactService','Average Repair Order')])
+    chart(visuals,'customer_value_by_type','columnChart','Customer value and repeat customers by type',(24,620,390,210),
+        'DimCustomer','customer_type',[('DimCustomer','Customer Lifetime Value'),('DimCustomer','Repeat Customers')])
+    chart(visuals,'customer_region_repeat','barChart','Repeat rate and service frequency by state',(430,620,390,210),
+        'DimCustomer','state',[('DimCustomer','Repeat Rate'),('DimCustomer','Service Frequency')])
+    table_visual(visuals,'customer_service_matrix','Customer segments and service behavior',(836,620,420,210),
+        [('DimCustomer','customer_type'),('DimCustomer','state')],
+        [('DimCustomer','Customers'),('DimCustomer','Repeat Customers'),('DimCustomer','Sales + Service Customers'),('DimCustomer','Service Frequency'),('DimCustomer','Customer Lifetime Value')])
+    text_box(visuals,'page_note','Service revenue uses completed orders; customer value combines signed sales revenue and completed service revenue through the selected period.',(24,850,1232,46),10)
+    write_page(PAGE_SERVICE_CUSTOMER,'Service & Customer',visuals,slicers)
+
+    visuals=[]
+    text_box(visuals,'header','DRILL-THROUGH  |  VEHICLE / MODEL DETAIL',(24,12,1232,46),21)
+    add_visual(visuals, visual('brand_card','card','Selected brand',(24,82,290,84),{'Values':[projection('DimVehicle','brand')]},
+        {'labels':formatting(fontSize=literal(20)), 'categoryLabels':formatting(show=literal(False))}))
+    add_visual(visuals, visual('model_card','card','Selected model',(330,82,290,84),{'Values':[projection('DimVehicle','model')]},
+        {'labels':formatting(fontSize=literal(20)), 'categoryLabels':formatting(show=literal(False))}))
+    add_visual(visuals, visual('type_card','card','Selected vehicle type',(636,82,290,84),{'Values':[projection('DimVehicle','vehicle_type')]},
+        {'labels':formatting(fontSize=literal(20)), 'categoryLabels':formatting(show=literal(False))}))
+    add_visual(visuals, visual('snapshot_card','card','Inventory snapshot used',(942,82,314,84),{'Values':[projection('FactInventory','As-Of Snapshot Date',True)]},
+        {'labels':formatting(fontSize=literal(16)), 'categoryLabels':formatting(show=literal(False))}))
+    drill_cards=[('Revenue','DimCustomer','Revenue'),('Units Sold','FactSales','Units Sold'),('ASP','FactSales','ASP'),
+        ('Gross Profit','FactSales','Gross Profit'),('Gross Margin %','FactSales','Gross Margin %'),
+        ('Inventory Units','FactInventory','As-Of Inventory Units'),('Inventory Value','FactInventory','As-Of Inventory Value'),
+        ('Average Age','FactInventory','As-Of Average Days in Inventory'),('90+ Day Vehicles','FactInventory','As-Of Slow-Moving Vehicles')]
+    for index,(title,table,measure) in enumerate(drill_cards):
+        add_visual(visuals, visual('detail_kpi_'+str(index),'card',title,(24+(index%3)*410,190+(index//3)*96,390,76),
+            {'Values':[projection(table,measure,True)]},
+            {'labels':formatting(fontSize=literal(20),color=color('#0C7B83')),
+             'categoryLabels':formatting(show=literal(False))}))
+    table_visual(visuals,'detail_table','Vehicle / model sales and inventory detail',(24,500,1232,315),
+        [('DimVehicle','brand'),('DimVehicle','model'),('DimVehicle','model_year'),('DimVehicle','vehicle_type'),('FactInventory','aging_bucket')],
+        [('FactSales','Units Sold'),('DimCustomer','Revenue'),('FactSales','Gross Profit'),('FactInventory','As-Of Inventory Units'),('FactInventory','As-Of Inventory Value'),('FactInventory','As-Of Average Days in Inventory')])
+    text_box(visuals,'privacy_note','Detail page excludes customer PII and VIN; filters arrive through DimVehicle brand, model, year and type.',(24,840,1232,50),10)
+    write_page(PAGE_VEHICLE_DETAIL,'Vehicle / Model Detail',visuals,page_type='Drillthrough',visibility='HiddenInViewMode',
+        page_binding={'name':'vehicle_model_detail','type':'Drillthrough','parameters':[
+            {'name':'brand','boundFilter':'DimVehicle.brand','fieldExpr':field('DimVehicle','brand')},
+            {'name':'model','boundFilter':'DimVehicle.model','fieldExpr':field('DimVehicle','model')},
+            {'name':'vehicle_type','boundFilter':'DimVehicle.vehicle_type','fieldExpr':field('DimVehicle','vehicle_type')}],
+            'acceptsFilterContext':'Default'})
 
 
 def build_model(project, metadata):
@@ -245,6 +397,28 @@ def build_model(project, metadata):
             'formatString':'#,0.00' if 'Value' in name else '#,0'})
     by_name['FactInventory']['measures'].append({'name':'Executive Snapshot Date','expression':
         'VAR AsOfDate = MAX(DimDate[full_date]) VAR SnapshotKey = CALCULATE([Inventory Snapshot Key], REMOVEFILTERS(DimSnapshotDate), TREATAS({AsOfDate}, DimSnapshotDate[full_date])) RETURN IF(NOT ISBLANK(AsOfDate) && NOT ISBLANK(SnapshotKey), DATE(INT(SnapshotKey / 10000), INT(MOD(SnapshotKey, 10000) / 100), MOD(SnapshotKey, 100)))', 'formatString':'yyyy-MM-dd'})
+    as_of_formats={'As-Of Inventory Value':'#,0.00','As-Of Inventory Units':'#,0',
+        'As-Of Average Days in Inventory':'#,0.00','As-Of Slow-Moving Vehicles':'#,0'}
+    for name,base in [('As-Of Inventory Value','Inventory Value'),('As-Of Inventory Units','Inventory Units'),
+        ('As-Of Average Days in Inventory','Average Days in Inventory'),('As-Of Slow-Moving Vehicles','Slow-Moving Vehicles')]:
+        by_name['FactInventory']['measures'].append({'name':name,'expression':
+            f'VAR AsOfDate = MAX(DimDate[full_date]) RETURN IF(NOT ISBLANK(AsOfDate), CALCULATE([{base}], REMOVEFILTERS(DimSnapshotDate), TREATAS({{AsOfDate}}, DimSnapshotDate[full_date])))',
+            'formatString':as_of_formats[name]})
+    by_name['FactInventory']['measures'].append({'name':'As-Of Snapshot Date','expression':
+        'VAR AsOfDate = MAX(DimDate[full_date]) VAR SnapshotKey = CALCULATE([Inventory Snapshot Key], REMOVEFILTERS(DimSnapshotDate), TREATAS({AsOfDate}, DimSnapshotDate[full_date])) RETURN IF(NOT ISBLANK(AsOfDate) && NOT ISBLANK(SnapshotKey), DATE(INT(SnapshotKey / 10000), INT(MOD(SnapshotKey, 10000) / 100), MOD(SnapshotKey, 100)))',
+        'formatString':'yyyy-MM-dd'})
+    by_name['DimCustomer']['measures'].extend([
+        {'name':'Customers with Sales','expression':
+            'COALESCE(SUMX(VALUES(DimCustomer[customer_id]), IF(CALCULATE(DISTINCTCOUNTNOBLANK(FactSales[sale_id]), KEEPFILTERS(FactSales[sale_status] = "Completed")) > 0, 1, 0)), 0)',
+            'formatString':'#,0','isHidden':True},
+        {'name':'Customers with Service','expression':
+            'COALESCE(SUMX(VALUES(DimCustomer[customer_id]), IF(CALCULATE([Service Orders]) > 0, 1, 0)), 0)',
+            'formatString':'#,0','isHidden':True},
+        {'name':'Sales + Service Customers','expression':
+            'COALESCE(SUMX(VALUES(DimCustomer[customer_id]), IF(CALCULATE(DISTINCTCOUNTNOBLANK(FactSales[sale_id]), KEEPFILTERS(FactSales[sale_status] = "Completed")) > 0 && CALCULATE([Service Orders]) > 0, 1, 0)), 0)',
+            'formatString':'#,0'},
+        {'name':'Service Frequency','expression':'DIVIDE([Service Orders], [Customers with Service])',
+            'formatString':'#,0.00'}])
     relationships=[]
     registry=(ROOT/'powerbi/documentation/star_schema.md').read_text()
     for one,col1,many,col2,active in re.findall(r'\| (Dim\w+)\.(\w+) \| (\w+)\.(\w+) \| (Yes|No) \|',registry):
@@ -263,9 +437,17 @@ def build_model(project, metadata):
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--rebuild',action='store_true',help='Replace only the generated definition files; close Desktop first')
+    parser.add_argument('--use-existing-snapshot',action='store_true',
+        help='Regenerate the PBIP/PBIR files from ignored local-data JSON when PostgreSQL is unavailable')
     args=parser.parse_args()
     if (PROJECT/'ExecutiveOverview.pbip').exists() and not args.rebuild:
         raise SystemExit('Project already exists; use --rebuild only to regenerate owned definitions.')
+    if args.use_existing_snapshot:
+        metadata=metadata_from_snapshot(PROJECT)
+        build_model(PROJECT,metadata)
+        build_report(PROJECT)
+        print(PROJECT/'ExecutiveOverview.pbip')
+        return
     engine=create_engine(ETLConfig.from_env().database_url,connect_args={'connect_timeout':10},isolation_level='REPEATABLE READ')
     metadata={}
     try:

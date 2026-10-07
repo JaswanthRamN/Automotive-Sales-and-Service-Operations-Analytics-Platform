@@ -1,0 +1,356 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/1.4.0/schema.json",
+  "name": "service_customer",
+  "displayName": "Service & Customer",
+  "displayOption": "FitToPage",
+  "width": 1280,
+  "height": 920,
+  "objects": {
+    "background": [
+      {
+        "properties": {
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#F3F6FA'"
+                  }
+                }
+              }
+            }
+          },
+          "transparency": {
+            "expr": {
+              "Literal": {
+                "Value": "0D"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "visualInteractions": [
+    {
+      "source": "slicer_date",
+      "target": "p3_kpi_0",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "p3_kpi_1",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "p3_kpi_2",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "p3_kpi_3",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "p3_kpi_4",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "p3_kpi_5",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "p3_kpi_6",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "p3_kpi_7",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "p3_kpi_8",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "p3_kpi_9",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "service_monthly",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "technician_perf",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "service_type_perf",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "customer_value_by_type",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "customer_region_repeat",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "customer_service_matrix",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "p3_kpi_0",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "p3_kpi_1",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "p3_kpi_2",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "p3_kpi_3",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "p3_kpi_4",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "p3_kpi_5",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "p3_kpi_6",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "p3_kpi_7",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "p3_kpi_8",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "p3_kpi_9",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "service_monthly",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "technician_perf",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "service_type_perf",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "customer_value_by_type",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "customer_region_repeat",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "customer_service_matrix",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "p3_kpi_0",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "p3_kpi_1",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "p3_kpi_2",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "p3_kpi_3",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "p3_kpi_4",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "p3_kpi_5",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "p3_kpi_6",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "p3_kpi_7",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "p3_kpi_8",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "p3_kpi_9",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "service_monthly",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "technician_perf",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "service_type_perf",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "customer_value_by_type",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "customer_region_repeat",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "customer_service_matrix",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "p3_kpi_0",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "p3_kpi_1",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "p3_kpi_2",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "p3_kpi_3",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "p3_kpi_4",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "p3_kpi_5",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "p3_kpi_6",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "p3_kpi_7",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "p3_kpi_8",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "p3_kpi_9",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "service_monthly",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "technician_perf",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "service_type_perf",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "customer_value_by_type",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "customer_region_repeat",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "customer_service_matrix",
+      "type": "DataFilter"
+    }
+  ]
+}

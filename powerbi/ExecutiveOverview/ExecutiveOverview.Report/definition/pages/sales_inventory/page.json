@@ -1,0 +1,336 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/1.4.0/schema.json",
+  "name": "sales_inventory",
+  "displayName": "Sales & Inventory",
+  "displayOption": "FitToPage",
+  "width": 1280,
+  "height": 920,
+  "objects": {
+    "background": [
+      {
+        "properties": {
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#F3F6FA'"
+                  }
+                }
+              }
+            }
+          },
+          "transparency": {
+            "expr": {
+              "Literal": {
+                "Value": "0D"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "visualInteractions": [
+    {
+      "source": "slicer_date",
+      "target": "p2_kpi_0",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "p2_kpi_1",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "p2_kpi_2",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "p2_kpi_3",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "p2_kpi_4",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "p2_kpi_5",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "p2_kpi_6",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "p2_kpi_7",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "p2_kpi_8",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "monthly_sales",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "salesperson_perf",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "brand_model_perf",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "inventory_aging",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "inventory_by_model",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_date",
+      "target": "vehicle_model_matrix",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "p2_kpi_0",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "p2_kpi_1",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "p2_kpi_2",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "p2_kpi_3",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "p2_kpi_4",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "p2_kpi_5",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "p2_kpi_6",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "p2_kpi_7",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "p2_kpi_8",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "monthly_sales",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "salesperson_perf",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "brand_model_perf",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "inventory_aging",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "inventory_by_model",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_dealer",
+      "target": "vehicle_model_matrix",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "p2_kpi_0",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "p2_kpi_1",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "p2_kpi_2",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "p2_kpi_3",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "p2_kpi_4",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "p2_kpi_5",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "p2_kpi_6",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "p2_kpi_7",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "p2_kpi_8",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "monthly_sales",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "salesperson_perf",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "brand_model_perf",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "inventory_aging",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "inventory_by_model",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_brand",
+      "target": "vehicle_model_matrix",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "p2_kpi_0",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "p2_kpi_1",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "p2_kpi_2",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "p2_kpi_3",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "p2_kpi_4",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "p2_kpi_5",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "p2_kpi_6",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "p2_kpi_7",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "p2_kpi_8",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "monthly_sales",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "salesperson_perf",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "brand_model_perf",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "inventory_aging",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "inventory_by_model",
+      "type": "DataFilter"
+    },
+    {
+      "source": "slicer_type",
+      "target": "vehicle_model_matrix",
+      "type": "DataFilter"
+    }
+  ]
+}
