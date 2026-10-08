@@ -102,7 +102,18 @@ def metadata_from_snapshot(project):
         rows=json.loads(path.read_text(encoding='utf-8'))
         if not rows:
             raise RuntimeError(f'Empty snapshot source: {table}')
-        metadata[table]=[(column,infer_type_code(rows[0].get(column))) for column in rows[0]]
+        # A cancelled appointment may be first: nullable keys/dates must still
+        # match relationship types. Unavailable service costs remain numeric.
+        columns=[]
+        for column in rows[0]:
+            value=next((row[column] for row in rows if row.get(column) is not None), None)
+            oid=infer_type_code(value)
+            if value is None:
+                if column.endswith('_key'): oid=23
+                elif column.endswith('_at'): oid=1114
+                elif column in ('service_cost','service_profit'): oid=1700
+            columns.append((column,oid))
+        metadata[table]=columns
     return metadata
 
 
