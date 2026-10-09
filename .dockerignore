@@ -15,3 +15,8 @@ airflow/airflow.db
 airflow/airflow.cfg
 *.pbix
 *.pbit
+# Exclude private report imports and unrelated local artifacts from context.
+powerbi/**/local-data
+powerbi/**/.pbi
+*.docx
+.pytest-*-temp

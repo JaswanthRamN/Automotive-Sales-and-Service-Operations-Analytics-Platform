@@ -105,3 +105,8 @@ loading to prevent SQL rounding or truncation.
 Final host pytest result: 121 passed, one skipped, with 83.97% combined API/src
 coverage. The skipped test requires a local Airflow installation; the actual
 container DAG import and complete task execution were verified separately.
+
+The September 30 record above is historical. On October 9 the Compose
+configuration passed, but build, up and ps failed because the Docker Desktop
+Linux engine pipe was absent. Current runtime acceptance is pending; see
+[final review](final_review.md). No volumes were deleted during that review.

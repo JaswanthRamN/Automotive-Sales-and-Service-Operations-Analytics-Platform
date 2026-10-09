@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
+import sqlite3
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -146,3 +147,26 @@ def test_sql_files_have_balanced_parentheses_and_terminators() -> None:
         sql = path.read_text(encoding="utf-8").strip()
         assert sql.count("(") == sql.count(")")
         assert sql.endswith(";")
+
+
+def test_returns_reverse_revenue_without_creating_repeat_interactions():
+    query = _analytics_sql().split('WITH sales_by_customer AS (', 1)[1].split('), service_by_customer AS', 1)[0]
+    query = re.sub(r'::(?:BIGINT|NUMERIC\([^)]*\))', '', query)
+    connection = sqlite3.connect(':memory:')
+    try:
+        connection.executescript("""
+        ATTACH DATABASE ':memory:' AS analytics;
+        CREATE TABLE analytics.fact_sales(customer_key INTEGER, sale_date_key INTEGER,
+            sale_status TEXT, unit_quantity INTEGER, sale_price REAL);
+        CREATE TABLE analytics.dim_date(date_key INTEGER, full_date TEXT);
+        INSERT INTO analytics.dim_date VALUES(20240101,'2024-01-01'),(20240201,'2024-02-01');
+        INSERT INTO analytics.fact_sales VALUES
+            (1,20240101,'Completed',1,100),(1,20240201,'Returned',-1,100),
+            (2,20240201,'Returned',-1,50),(3,20240101,'Cancelled',1,999);
+        """)
+        rows = {row[0]: row[1:] for row in connection.execute(query)}
+        assert rows[1] == (1, 0, 0, '2024-01-01', '2024-01-01')
+        assert rows[2] == (0, -1, -50, None, None)
+        assert 3 not in rows
+    finally:
+        connection.close()

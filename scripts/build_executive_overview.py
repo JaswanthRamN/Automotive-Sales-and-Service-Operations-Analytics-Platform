@@ -363,6 +363,10 @@ def build_report(project):
 
 def build_model(project, metadata):
     model_path=project/'ExecutiveOverview.SemanticModel'
+    write_json(model_path/'.platform', {
+        '$schema':'https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json',
+        'version':'2.0','metadata':{'type':'SemanticModel','displayName':'ExecutiveOverview'},
+        'config':{'version':'2.0','logicalId':'6a8f215f-ad82-4f9e-a4d0-a66cb8ac01c8'}})
     write_json(model_path/'definition.pbism', {'version':'1.0','settings':{}})
     tables=[]
     for name, columns in metadata.items():

@@ -21,11 +21,11 @@ CREATE OR REPLACE VIEW analytics.vw_customer_lifetime_detail AS
 WITH sales_by_customer AS (
     SELECT
         f.customer_key,
-        COUNT(*)::BIGINT AS sales_transaction_count,
+        COUNT(*) FILTER (WHERE f.sale_status = 'Completed')::BIGINT AS sales_transaction_count,
         SUM(f.unit_quantity)::BIGINT AS net_units_purchased,
         SUM(f.sale_price * f.unit_quantity)::NUMERIC(18, 2) AS sales_revenue,
-        MIN(d.full_date) AS first_sale_date,
-        MAX(d.full_date) AS last_sale_date
+        MIN(d.full_date) FILTER (WHERE f.sale_status = 'Completed') AS first_sale_date,
+        MAX(d.full_date) FILTER (WHERE f.sale_status = 'Completed') AS last_sale_date
     FROM analytics.fact_sales f
     JOIN analytics.dim_date d ON d.date_key = f.sale_date_key
     WHERE f.sale_status IN ('Completed', 'Returned')

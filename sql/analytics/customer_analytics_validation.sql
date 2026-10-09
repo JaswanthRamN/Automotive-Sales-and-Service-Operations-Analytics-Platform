@@ -9,7 +9,7 @@ WITH source_customers AS (
     FROM analytics.dim_customer
     WHERE is_current
 ), source_sales AS (
-    SELECT COUNT(*)::BIGINT AS sales_transactions,
+    SELECT COUNT(*) FILTER (WHERE sale_status = 'Completed')::BIGINT AS sales_transactions,
            COALESCE(SUM(sale_price * unit_quantity), 0)::NUMERIC AS sales_revenue
     FROM analytics.fact_sales
     WHERE sale_status IN ('Completed', 'Returned')

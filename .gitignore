@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 *.egg-info/
 .pytest_cache/
+.pytest-*-temp/
 .mypy_cache/
 .ruff_cache/
 
@@ -48,3 +49,10 @@ powerbi/**/local-data/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Machine-local Power BI layout and legacy empty Desktop report stub.
+powerbi/ExecutiveOverview/ExecutiveOverview.Report/report.json
+powerbi/ExecutiveOverview/ExecutiveOverview.SemanticModel/diagramLayout.json
+
+# Unrelated local document retained on disk rather than published.
+/cloud_security_compliance_iam_35_day_codex_tasks.docx

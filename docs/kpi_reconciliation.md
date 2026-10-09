@@ -157,3 +157,30 @@ Changed files: this document, scripts/reconcile_kpis.py,
 tests/test_kpi_reconciliation.py, scripts/build_executive_overview.py and
 powerbi/ExecutiveOverview/ExecutiveOverview.SemanticModel/model.bim.
 No commit or push was requested for this task; no next-day work was started.
+
+## Final-review addendum — October 9, 2026
+
+The subsequent complete review found that customer SQL counted Returned rows
+as qualifying sales interactions, whereas DAX counts only Completed purchases.
+This could classify a sale followed by a return as repeat, or a returns-only
+customer as a buyer. The customer SQL now counts only Completed sale events and
+uses those events for first/last purchase dates while retaining signed returned
+revenue and net units. Its independent validation reference was changed to the
+same event contract. A controlled SQL fixture proves that a purchase plus return
+has one purchase interaction and zero net revenue, and a returns-only customer
+has zero qualifying purchases but negative revenue. No current PostgreSQL view
+was changed because the live database is unavailable; apply the updated view
+script/bootstrap and rerun all gates after startup.
+
+The original business requirements contain aspirational history-based repeat
+and repair-order completion definitions. Implemented Repeat Customers counts
+>=2 qualifying events in the selected period; Completion Rate uses terminal
+appointments. These documented implementation decisions require business
+approval before production and are not presented as identical definitions.
+
+Full tests and dependency checks were rerun; see [final review](final_review.md).
+Docker config passed, but build/up/ps could not reach Docker's engine; PostgreSQL
+timed out and the live API refused connection. Saved snapshot totals remain
+unchanged. Actual DAX and live PostgreSQL equality are still pending; the final
+local commit packages review fixes and documentation rather than certifying
+end-to-end runtime or publishing to GitHub.

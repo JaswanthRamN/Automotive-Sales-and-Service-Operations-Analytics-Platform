@@ -1,7 +1,9 @@
 # Power Query import specification
 
-These M templates are for future Desktop implementation; they were reviewed
-against PostgreSQL columns, but were not executed by a Power Query engine today.
+These M templates define the import contract. The PBIP generator implements its
+own equivalent source projections/types and connection parameters in model.bim.
+The templates are not automatically executed, and live Desktop refresh/folding
+remains an acceptance check; see ../../docs/dashboard_guide.md.
 
 ## Connection and load plan
 

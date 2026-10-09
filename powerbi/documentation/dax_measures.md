@@ -17,7 +17,8 @@ relationship and inactive completion relationship; SnapshotDate is independent.
 FactSales values are already signed and Cancelled is excluded by the source.
 Facts are at sale, snapshot-vehicle-dealership, and appointment grain. Hide raw
 numeric fields; use explicit measures and dimension attributes for slicers.
-No pages, PBIX, database objects or ETL are created by this phase.
+The report generator deploys these expressions permanently in model.bim and
+builds three pages; actual Desktop execution is a separate acceptance step.
 Revenue is hosted on DimCustomer to avoid a case-insensitive name collision
 with FactSales[revenue]. The home table does not determine filter context;
 group Revenue in a Sales display folder.
