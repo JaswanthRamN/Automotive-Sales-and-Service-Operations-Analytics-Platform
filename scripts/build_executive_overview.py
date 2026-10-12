@@ -171,7 +171,7 @@ def build_report(project):
     write_json(report/'definition.pbir', {'$schema':BASE+'definitionProperties/2.0.0/schema.json','version':'4.0', 'datasetReference':{'byPath':{'path':'../ExecutiveOverview.SemanticModel'}}})
     write_json(definition/'version.json', {'$schema':DEFINITION+'versionMetadata/1.0.0/schema.json','version':'2.0.0'})
     write_json(report/'.platform', {'$schema':'https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json',
-        'version':'2.0','metadata':{'type':'Report','displayName':'ExecutiveOverview'},
+        'metadata':{'type':'Report','displayName':'ExecutiveOverview'},
         'config':{'version':'2.0','logicalId':'d2737a23-71ed-4453-b461-c332146677c4'}})
     write_json(definition/'pages/pages.json', {'$schema':DEFINITION+'pagesMetadata/1.0.0/schema.json',
         'pageOrder':[PAGE,PAGE_SALES_INVENTORY,PAGE_SERVICE_CUSTOMER,PAGE_VEHICLE_DETAIL],
@@ -365,7 +365,7 @@ def build_model(project, metadata):
     model_path=project/'ExecutiveOverview.SemanticModel'
     write_json(model_path/'.platform', {
         '$schema':'https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json',
-        'version':'2.0','metadata':{'type':'SemanticModel','displayName':'ExecutiveOverview'},
+        'metadata':{'type':'SemanticModel','displayName':'ExecutiveOverview'},
         'config':{'version':'2.0','logicalId':'6a8f215f-ad82-4f9e-a4d0-a66cb8ac01c8'}})
     write_json(model_path/'definition.pbism', {'version':'1.0','settings':{}})
     tables=[]

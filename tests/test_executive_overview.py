@@ -107,3 +107,21 @@ def test_slicer_interactions_and_credentials_excluded():
     assert 'postgres_password' not in content and 'password=' not in content
     for table in model['model']['tables']:
         assert not {'email','phone'} & {c['name'] for c in table['columns']}
+
+
+def test_platform_properties_use_supported_top_level_fields():
+    assert not (PROJECT / 'ExecutiveOverview.Report' / 'report.json').exists(), (
+        'Legacy report.json cannot coexist with the PBIR definition directory'
+    )
+    for artifact, expected_type in [
+        ('ExecutiveOverview.Report', 'Report'),
+        ('ExecutiveOverview.SemanticModel', 'SemanticModel'),
+    ]:
+        platform = load(PROJECT / artifact / '.platform')
+        assert set(platform) == {'$schema', 'metadata', 'config'}
+        assert platform['metadata']['type'] == expected_type
+        assert platform['config']['version'] == '2.0'
+
+    generator = (PROJECT.parents[1] / 'scripts/build_executive_overview.py').read_text(encoding='utf-8')
+    assert "'version':'2.0','metadata':{'type':'Report'" not in generator
+    assert "'version':'2.0','metadata':{'type':'SemanticModel'" not in generator
