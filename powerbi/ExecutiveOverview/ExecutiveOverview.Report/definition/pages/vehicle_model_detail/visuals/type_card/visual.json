@@ -140,17 +140,17 @@
           "projections": [
             {
               "field": {
-                "Column": {
+                "Measure": {
                   "Expression": {
                     "SourceRef": {
                       "Entity": "DimVehicle"
                     }
                   },
-                  "Property": "vehicle_type"
+                  "Property": "Selected Vehicle Type"
                 }
               },
-              "queryRef": "DimVehicle.vehicle_type",
-              "nativeQueryRef": "vehicle_type"
+              "queryRef": "DimVehicle.Selected Vehicle Type",
+              "nativeQueryRef": "Selected Vehicle Type"
             }
           ]
         }

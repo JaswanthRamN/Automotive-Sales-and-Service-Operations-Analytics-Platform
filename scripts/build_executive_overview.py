@@ -332,11 +332,11 @@ def build_report(project):
 
     visuals=[]
     text_box(visuals,'header','DRILL-THROUGH  |  VEHICLE / MODEL DETAIL',(24,12,1232,46),21)
-    add_visual(visuals, visual('brand_card','card','Selected brand',(24,82,290,84),{'Values':[projection('DimVehicle','brand')]},
+    add_visual(visuals, visual('brand_card','card','Selected brand',(24,82,290,84),{'Values':[projection('DimVehicle','Selected Brand',True)]},
         {'labels':formatting(fontSize=literal(20)), 'categoryLabels':formatting(show=literal(False))}))
-    add_visual(visuals, visual('model_card','card','Selected model',(330,82,290,84),{'Values':[projection('DimVehicle','model')]},
+    add_visual(visuals, visual('model_card','card','Selected model',(330,82,290,84),{'Values':[projection('DimVehicle','Selected Model',True)]},
         {'labels':formatting(fontSize=literal(20)), 'categoryLabels':formatting(show=literal(False))}))
-    add_visual(visuals, visual('type_card','card','Selected vehicle type',(636,82,290,84),{'Values':[projection('DimVehicle','vehicle_type')]},
+    add_visual(visuals, visual('type_card','card','Selected vehicle type',(636,82,290,84),{'Values':[projection('DimVehicle','Selected Vehicle Type',True)]},
         {'labels':formatting(fontSize=literal(20)), 'categoryLabels':formatting(show=literal(False))}))
     add_visual(visuals, visual('snapshot_card','card','Inventory snapshot used',(942,82,314,84),{'Values':[projection('FactInventory','As-Of Snapshot Date',True)]},
         {'labels':formatting(fontSize=literal(16)), 'categoryLabels':formatting(show=literal(False))}))
@@ -407,6 +407,11 @@ def build_model(project, metadata):
         fmt='0.00%' if name in ('Gross Margin %','Completion Rate','Repeat Rate') else '#,0.00' if name in ('Revenue','ASP','Gross Profit','Inventory Value','Service Revenue','Average Repair Order','Customer Lifetime Value','Average Days in Inventory') else '#,0'
         by_name[home].setdefault('measures',[]).append({'name':name,'expression':expression,'formatString':fmt,
             'isHidden':name in ('Inventory Snapshot Key','Qualifying Interactions','Qualifying Customers')})
+    by_name['DimVehicle']['measures'] = [
+        {'name':'Selected Brand','expression':'SELECTEDVALUE(DimVehicle[brand], "All Brands")'},
+        {'name':'Selected Model','expression':'SELECTEDVALUE(DimVehicle[model], "All Models")'},
+        {'name':'Selected Vehicle Type','expression':'SELECTEDVALUE(DimVehicle[vehicle_type], "All Vehicle Types")'},
+    ]
     for name,base in [('Executive Inventory Value','Inventory Value'),('Executive Inventory Units','Inventory Units')]:
         by_name['FactInventory']['measures'].append({'name':name,'expression':f'VAR AsOfDate = MAX(DimDate[full_date]) RETURN IF(NOT ISBLANK(AsOfDate), CALCULATE([{base}], REMOVEFILTERS(DimSnapshotDate), TREATAS({{AsOfDate}}, DimSnapshotDate[full_date])))',
             'formatString':'#,0.00' if 'Value' in name else '#,0'})
@@ -442,7 +447,7 @@ def build_model(project, metadata):
             'fromCardinality':'many','toCardinality':'one','isActive':active=='Yes'})
     parameters=[('UseLocalSnapshot','true'),('SnapshotFolder',json.dumps(str((project/'local-data').resolve()).replace('\\','/'))),
         ('Server','"localhost:5432"'),('Database','"automotive_analytics"')]
-    write_json(model_path/'model.bim', {'name':'ExecutiveOverview','compatibilityLevel':1600,
+    write_json(model_path/'model.bim', {'name':'ExecutiveOverview','compatibilityLevel':1606,
         'model':{'culture':'en-US','defaultPowerBIDataSourceVersion':'powerBI_V3',
             'annotations':[{'name':'PBI_TimeIntelligenceEnabled','value':'0'}],
             'expressions':[{'name':n,'kind':'m','expression':v} for n,v in parameters],

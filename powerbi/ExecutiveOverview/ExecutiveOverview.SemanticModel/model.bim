@@ -1,6 +1,6 @@
 {
   "name": "ExecutiveOverview",
-  "compatibilityLevel": 1600,
+  "compatibilityLevel": 1606,
   "model": {
     "culture": "en-US",
     "defaultPowerBIDataSourceVersion": "powerBI_V3",
@@ -435,6 +435,20 @@
                 "in Typed"
               ]
             }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Selected Brand",
+            "expression": "SELECTEDVALUE(DimVehicle[brand], \"All Brands\")"
+          },
+          {
+            "name": "Selected Model",
+            "expression": "SELECTEDVALUE(DimVehicle[model], \"All Models\")"
+          },
+          {
+            "name": "Selected Vehicle Type",
+            "expression": "SELECTEDVALUE(DimVehicle[vehicle_type], \"All Vehicle Types\")"
           }
         ]
       },

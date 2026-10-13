@@ -59,7 +59,9 @@ def test_requested_pages_visuals_and_nonoverlapping_layout():
 
 
 def test_fields_resolve_and_date_relationships():
-    model=load(PROJECT/'ExecutiveOverview.SemanticModel/model.bim')['model']
+    model_document=load(PROJECT/'ExecutiveOverview.SemanticModel/model.bim')
+    assert model_document['compatibilityLevel'] == 1606
+    model=model_document['model']
     tables={t['name']:t for t in model['tables']}
     assert len(tables)==12
     for page in ['executive_overview','sales_inventory','service_customer','vehicle_model_detail']:
@@ -87,6 +89,17 @@ def test_fields_resolve_and_date_relationships():
         'Customers with Sales','Customers with Service','Sales + Service Customers','Service Frequency'} <= set(customer_measures)
     assert customer_measures['Customers with Sales']['isHidden']
     assert customer_measures['Customers with Service']['isHidden']
+    vehicle_measures={m['name']:m['expression'] for m in tables['DimVehicle']['measures']}
+    assert vehicle_measures == {
+        'Selected Brand': 'SELECTEDVALUE(DimVehicle[brand], "All Brands")',
+        'Selected Model': 'SELECTEDVALUE(DimVehicle[model], "All Models")',
+        'Selected Vehicle Type': 'SELECTEDVALUE(DimVehicle[vehicle_type], "All Vehicle Types")',
+    }
+    drill_cards={v['name']:v for v in page_visuals('vehicle_model_detail') if v['name'] in {'brand_card','model_card','type_card'}}
+    assert {
+        next(iter(card['visual']['query']['queryState']['Values']['projections'][0]['field']))
+        for card in drill_cards.values()
+    } == {'Measure'}
 
 
 def test_slicer_interactions_and_credentials_excluded():
